@@ -139,9 +139,7 @@ void Portfolio::executeOrder(const Order& order) {
                                     .commission = commission_});
             std::cout << "Logged Trade | "
                       << "Closed: " << closedQuantity << " Entered @ " << pos.averagePrice
-                      << " Exited @ " << order.price
-                      << " Price diff: " << order.price - pos.averagePrice
-                      << " PnL (w commission): " << tradePnl << std::endl;
+                      << " Exited @ " << order.price << " P&L: " << tradePnl << std::endl;
 
             availableCash_ += (abs(closedQuantity) * pos.averagePrice + tradePnl + commission_);
 
