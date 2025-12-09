@@ -48,7 +48,7 @@ int main() {
             std::cout << "INFO | Total Equity After: " << portfolio.getTotalEquity(bar)
                       << std::setprecision(7) << std::endl;
 
-            std::cout << "-----------------------------------------------" << std::endl;
+            std::cout << "----------------------------------------------" << std::endl;
         }
 
         barCount++;
