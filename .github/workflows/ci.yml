@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          gcc-13 \
+          g++-13 \
+          clang-format \
+          clang-tidy
+    
+    - name: Set GCC 13 as default
+      run: |
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+    
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+    
+    - name: Build
+      run: |
+        cd build
+        make -j$(nproc)
+    
+    - name: Run Unit Tests
+      run: |
+        cd build
+        ctest --output-on-failure --verbose
+    
+    - name: Run Backtest (Integration Test)
+      run: |
+        cd build
+        timeout 60s ./backtest
+    
+    - name: Check Code Formatting
+      run: |
+        find . -type f \( -name "*.cpp" -o -name "*.h" \) \
+          -not -path "./build/*" \
+          -exec clang-format --dry-run --Werror {} +
+    
+    - name: Run Static Analysis
+      run: |
+        cd build
+        clang-tidy ../src/*.cpp ../strategies/*.cpp || true
+    
+    - name: Archive test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: build/Testing/Temporary/LastTest.log

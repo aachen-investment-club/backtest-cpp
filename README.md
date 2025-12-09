@@ -1,4 +1,7 @@
 # Backtesting Engine
+
+![CI](https://github.com/aachen-investment-club/backtest-cpp/actions/workflows/ci.yml/badge.svg)
+
 A high-performance, event-driven backtesting system for quantitative trading strategies built with C++17.
   
 ## Build
