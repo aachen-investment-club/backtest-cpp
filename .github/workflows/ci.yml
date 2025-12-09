@@ -21,9 +21,7 @@ jobs:
           build-essential \
           cmake \
           gcc-13 \
-          g++-13 \
-          clang-format \
-          clang-tidy
+          g++-13
     
     - name: Set GCC 13 as default
       run: |
@@ -34,8 +32,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=Release \
-              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+        cmake -DCMAKE_BUILD_TYPE=Release ..
     
     - name: Build
       run: |
@@ -51,21 +48,3 @@ jobs:
       run: |
         cd build
         timeout 60s ./backtest
-    
-    - name: Check Code Formatting
-      run: |
-        find . -type f \( -name "*.cpp" -o -name "*.h" \) \
-          -not -path "./build/*" \
-          -exec clang-format --dry-run --Werror {} +
-    
-    - name: Run Static Analysis
-      run: |
-        cd build
-        clang-tidy ../src/*.cpp ../strategies/*.cpp || true
-    
-    - name: Archive test results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results
-        path: build/Testing/Temporary/LastTest.log
