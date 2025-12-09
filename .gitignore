@@ -1,0 +1,25 @@
+# Build
+build/
+*.o
+*.a
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Profiling
+*.prof
+gmon.out
+perf.data*
+callgrind.out.*
+
+# Testing
+*.gcda
+*.gcno
+
+# Data (optional, maybe commit sample data)
+# data/*.csv
+
+# Other
+TODO.txt
