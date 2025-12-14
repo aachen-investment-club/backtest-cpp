@@ -38,6 +38,7 @@ add_executable(backtest
     src/portfolio.cpp
     src/event.cpp
     ./strategies/SMACrossover.cpp
+    src/performance.cpp
 )
 
 # ============================================================================
@@ -63,10 +64,20 @@ target_link_libraries(portfolio_tests
     GTest::gtest_main
 )
 
+add_executable(performance_tests
+    tests/test_performance.cpp
+    src/performance.cpp
+)
+
+target_link_libraries(performance_tests
+    GTest::gtest_main
+)
+
 # Discover and register tests with CTest
 include(GoogleTest)
 gtest_discover_tests(data_tests)
 gtest_discover_tests(portfolio_tests)
+gtest_discover_tests(performance_tests)
 
 # ============================================================================
 # Optional: Generate compile_commands.json for IDE integration
