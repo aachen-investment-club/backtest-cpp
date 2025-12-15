@@ -19,10 +19,10 @@ std::vector<EquityPoint> makeCurve(const std::vector<double>& equities, time_t s
 // Annualized Return Tests
 // -----------------------------
 TEST(PerformanceTest, AnnualizedReturnSimpleGrowth) {
-    auto curve = makeCurve({100, 110, 121}); // +10% per step
+    auto curve = makeCurve({100, 101, 102.01}); // +1% per step
     double annRet = Performance::annualizedReturn(curve, Frequency::DAILY);
-    // Expected approx: (121/100)^(252/2) - 1, but we'll check sign and type
-    EXPECT_GT(annRet, 0);
+    // Expected approx: (121/100)^(252/2) - 1
+    EXPECT_NEAR(annRet, 11.247, 0.1);
 }
 
 TEST(PerformanceTest, AnnualizedReturnSingleBar) {
@@ -42,7 +42,7 @@ TEST(PerformanceTest, AnnualizedReturnNoGrowth) {
 TEST(PerformanceTest, VolatilitySimple) {
     auto curve = makeCurve({100, 102, 101, 103});
     double vol = Performance::annualizedVolatility(curve, Frequency::DAILY);
-    EXPECT_GT(vol, 0);
+    EXPECT_NEAR(vol, 0.271, 0.1);
 }
 
 TEST(PerformanceTest, VolatilityConstantCurve) {
@@ -60,9 +60,9 @@ TEST(PerformanceTest, VolatilityTooShort) {
 // Sharpe Ratio Tests
 // -----------------------------
 TEST(PerformanceTest, SharpePositive) {
-    auto curve = makeCurve({100, 102, 104, 106});
+    auto curve = makeCurve({100, 101, 100, 103});
     double sr = Performance::sharpeRatio(curve, Frequency::DAILY, 0.0);
-    EXPECT_GT(sr, 0);
+    EXPECT_NEAR(sr, 35, 0.1);
 }
 
 TEST(PerformanceTest, SharpeZeroVolatility) {
@@ -82,12 +82,4 @@ TEST(PerformanceTest, FrequencyMinuteCurve) {
     EXPECT_GT(annRet, 0);
     EXPECT_GT(vol, 0);
     EXPECT_GT(sr, 0);
-}
-
-// -----------------------------
-// Main entry
-// -----------------------------
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }

@@ -2,14 +2,14 @@
 #include <cmath>
 #include <stdexcept>
 
-Annualization Performance::getAnnualization(Frequency freq) {
+Annualization Performance::getAnnualization(Frequency freq) { // TODO: make instrument specific
     switch (freq) {
         case Frequency::DAILY:
             return {252.0};
         case Frequency::HOURLY:
-            return {252.0 * 6.5};  // US trading hours 9:30 AM → 4:00 PM = 6.5 hours per day
+            return {252.0 * 23.0}; // Futures trading hours for our NQ example
         case Frequency::MINUTE:
-            return {252.0 * 390.0};
+            return {252.0 * 23.0 * 60.0};
         default:
             throw std::runtime_error("Unknown frequency");
     }
