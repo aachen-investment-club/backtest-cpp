@@ -9,6 +9,29 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include_directories(include)
 
 # ============================================================================
+# Build Type Configuration
+# ============================================================================
+# Set default build type if not specified
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING 
+        "Choose: Debug or Release" FORCE)
+endif()
+
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
+# Configure compiler flags for GCC/Clang
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    # Debug: For GDB debugging
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
+    
+    # Release: For fast execution
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+    
+    # Optional: Release with debug info (fast but still debuggable)
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DNDEBUG")
+endif()
+
+# ============================================================================
 # Google Test Setup
 # ============================================================================
 
@@ -35,6 +58,7 @@ enable_testing()
 add_executable(backtest
     src/main.cpp
     src/data.cpp
+    src/utils.cpp
     src/portfolio.cpp
     src/event.cpp
     ./strategies/SMACrossover.cpp
@@ -48,6 +72,7 @@ add_executable(backtest
 add_executable(data_tests
     tests/test_data.cpp
     src/data.cpp
+    src/utils.cpp
 )
 
 target_link_libraries(data_tests
@@ -58,6 +83,7 @@ add_executable(portfolio_tests
     tests/test_portfolio.cpp
     src/data.cpp
     src/portfolio.cpp
+    src/utils.cpp
 )
 
 target_link_libraries(portfolio_tests

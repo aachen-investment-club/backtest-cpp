@@ -17,16 +17,17 @@ class Portfolio {
     Portfolio(const PortfolioConfig& config);
 
     std::map<std::string, Position>& getCurrentPositions();
-    const double getInvestedValue(const Bar& currentBar) const;
-    const double getTotalEquity(const Bar& currentBar) const;
+    const double getInvestedValue(const std::map<std::string, Bar>& currentBars) const;
+    const double getTotalEquity(const std::map<std::string, Bar>& currentBar) const;
     double getRealizedPnL() const;
-    double getUnrealizedPnL(const Bar& currentBar) const;
+    double getUnrealizedPnL(const std::map<std::string, Bar>& currentBars) const;
     bool checkOverdraft(const Order& order) const;
     std::vector<Order> getAllOrders(time_t fromTime) const;
     std::vector<Trade> getAllTrades() const;
     double getAvailableCash() const;
-    void closeAllPositions(const Bar& currentBar);
-    void executeOrder(const Order& order);
+    void closeAllPositions(const std::map<std::string, Bar>& currentBars);
+    void executeOrder(const Order& order, const bool close);
+
 
    private:
     double availableCash_ = 10000;

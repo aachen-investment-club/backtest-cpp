@@ -28,14 +28,14 @@ find . -name "*.cpp" -o -name "*.h" | xargs clang-format -i
 
 ## ToDos
 ### Code Quality
-- [ ] Refactor commission logic
-- [ ] More flexible CSV parsing logic
+- [IN PROGRESS] Refactor commission logic
+- [IN PROGRESS] More flexible CSV parsing logic
 - [ ] More rigorous testing
 - [ ] Add integration tests
 - [ ] Improve error handling
 
 ### Functionality
-- [ ] Add performance.h/cpp (Annualized Sharpe, Profit Factor, Max Drawdown, etc.)
+- [IN PROGRESS] Add performance.h/cpp (Annualized Sharpe, Profit Factor, Max Drawdown, etc.)
 - [ ] Add bid-ask spread modeling
 - [ ] Multi-asset support (multiple stocks)
 - [ ] Complex derivatives support (options pricing)
