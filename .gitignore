@@ -1,5 +1,7 @@
 # Build
 build/
+build-debug/
+build-release/
 *.o
 *.a
 

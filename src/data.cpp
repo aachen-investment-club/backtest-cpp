@@ -1,30 +1,14 @@
-#include "data.h"
-
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <filesystem>
 
-DataHandler::DataHandler() : currentIndex_(0) {}
+#include "data.h"
+#include "utils.h"
 
-time_t DataHandler::parseDateTime(const std::string& datetime_str) {
-    std::tm tm = {};
-    std::istringstream ss(datetime_str);
-
-    // Parse format: "2008-01-02 06:00:00"
-    ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
-
-    if (ss.fail()) {
-        std::cerr << "Failed to parse datetime: " << datetime_str << std::endl;
-        return 0;
-    }
-
-    // Convert to time_t
-    return std::mktime(&tm);
-}
-
-void DataHandler::loadCSV(const std::string& filepath) {
+void DataHandler::loadCSV(const std::string& filepath, std::string symbol = "") {
     std::ifstream file(filepath);
 
     if (!file) {
@@ -32,9 +16,14 @@ void DataHandler::loadCSV(const std::string& filepath) {
         return;
     }
 
-    std::string line;
+    if (symbol.empty()) {
+        symbol = extractSymbolFromPath(filepath);
+    }
 
+    std::string line;
+    int numLine = 0;
     std::getline(file, line);
+    instrumentData_.reserve(getLineNumbers(filepath));
 
     while (std::getline(file, line)) {
         std::vector<std::string> row;
@@ -47,8 +36,9 @@ void DataHandler::loadCSV(const std::string& filepath) {
 
         if (row.size() >= 6) {  // Ensure we have all columns
             Bar bar;
+            std::map<std::string, Bar> symbolBarPair;
 
-            bar.symbol = "NQ";
+            bar.symbol = symbol;
             bar.time = parseDateTime(row[0]);
             bar.open = std::stod(row[1]);
             bar.high = std::stod(row[2]);
@@ -56,35 +46,59 @@ void DataHandler::loadCSV(const std::string& filepath) {
             bar.close = std::stod(row[4]);
             bar.volume = std::stol(row[5]);
 
-            bars_.push_back(bar);  // Add to internal vector
+            symbolBarPair[symbol] = bar;
+
+            instrumentData_.push_back(symbolBarPair);  // Add to internal vector
         }
     }
 
     file.close();
-    std::cout << "Loaded " << bars_.size() << " bars from " << filepath << std::endl;
+    std::cout << "Loaded " << instrumentData_.size() << " bars from " << filepath << std::endl;
 }
 
-Bar DataHandler::getCurrentBar() const {
+void DataHandler::loadAllCSVs(const std::string& directory) {
+    int counter{0};
+    for (auto const& dir_entry : std::filesystem::directory_iterator{directory}) {
+        if(dir_entry.is_regular_file() && dir_entry.path().extension() == ".csv") {
+            loadCSV(dir_entry.path());
+            counter++;
+        }
+    }
+    std::cout << "Loaded " << counter << " csv files";
+}
+
+void DataHandler::synchronize(std::vector<std::map<std::string, Bar>>& rawData) {
+    // Collects all unique timestamps from all loaded instruments
+    // Sorts them chronologically
+    // For each timestamp:
+
+    // Check which instruments have bars at that timestamp
+    // For instruments without data at that timestamp, use their most recent bar (forward-fill)
+    // Store the complete map in synchronizedBars_
+    return;
+}
+
+std::map<std::string, Bar> DataHandler::getCurrentBars() const {
     if (currentIndex_ == 0) {
         throw std::runtime_error("No bar has been processed yet. Call getNextBar() first.");
     }
 
-    if (currentIndex_ > bars_.size()) {
+    if (currentIndex_ > instrumentData_.size()) {
         throw std::out_of_range("Current index out of bounds");
     }
 
-    return bars_[currentIndex_ - 1];
+    return instrumentData_[currentIndex_ - 1];
 }
 
-Bar DataHandler::getNextBar() {
+std::map<std::string, Bar> DataHandler::getNextBars() {
     if (!hasMoreData()) {
         throw std::out_of_range("No more data available");
     }
-    return bars_[currentIndex_++];
+    return instrumentData_[currentIndex_++];
 }
 
 bool DataHandler::hasMoreData() const {
-    return currentIndex_ < bars_.size();
+    return currentIndex_ < instrumentData_.size();
 }
 
 void DataHandler::reset() {
@@ -92,5 +106,5 @@ void DataHandler::reset() {
 }
 
 size_t DataHandler::size() const {
-    return bars_.size();
+    return instrumentData_.size();
 }
