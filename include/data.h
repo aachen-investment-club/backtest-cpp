@@ -21,5 +21,5 @@ class DataHandler {
 
    private:
     std::vector<std::map<std::string, Bar>>  instrumentData_; // Loaded, synced data
-    size_t currentIndex_; // Current position in data
+    size_t currentIndex_ = 0; // Current position in data
 };
