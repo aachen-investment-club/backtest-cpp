@@ -6,7 +6,7 @@ std::string extractSymbolFromPath(const std::string& filepath);
 uint64_t getLineNumbers(const std::string& filepath);
 
 // Time utilities
-time_t parseDateTime(const std::string& datetime_str);
+int64_t parseDateTime(const std::string& datetime_str);
 std::string formatTimestamp(uint64_t timestamp);
 
 // Math utilities

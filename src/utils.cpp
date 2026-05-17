@@ -11,7 +11,7 @@ std::string extractSymbolFromPath(const std::string& path) {
     return std::filesystem::path(path).stem().string();
 }
 
-time_t parseDateTime(const std::string& datetime_str) {
+int64_t parseDateTime(const std::string& datetime_str) {
     std::tm tm = {};
     std::istringstream ss(datetime_str);
 
@@ -24,8 +24,11 @@ time_t parseDateTime(const std::string& datetime_str) {
         return 0;
     }
 
-    // Convert to time_t
-    return std::mktime(&tm);
+    // Convert to time_t in UNIX seconds
+    std::time_t seconds = std::mktime(&tm);
+
+    // Convert to nanoseconds
+    return static_cast<int64_t>(seconds) * 1000000000LL;
 }
 
 uint64_t getLineNumbers(const std::string& filepath) {

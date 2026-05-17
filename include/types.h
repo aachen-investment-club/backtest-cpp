@@ -15,7 +15,7 @@ enum class EventType {
 
 struct Bar {
     std::string symbol;
-    time_t time;
+    int64_t time;
     double open;
     double high;
     double low;
@@ -24,13 +24,13 @@ struct Bar {
 };
 
 struct Signal {
-    time_t time;
+    int64_t time;
     std::string symbol;
     SignalType type;
 };
 
 struct Order {
-    time_t time;
+    int64_t time;
     std::string symbol;
     SignalType direction;
     double price;
