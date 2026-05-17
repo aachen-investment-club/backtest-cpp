@@ -4,6 +4,7 @@ build-debug/
 build-release/
 *.o
 *.a
+.cache/
 
 # IDE
 .vscode/

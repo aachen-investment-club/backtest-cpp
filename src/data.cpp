@@ -60,7 +60,7 @@ void DataHandler::loadAllCSVs(const std::string& directory) {
     int counter{0};
     for (auto const& dir_entry : std::filesystem::directory_iterator{directory}) {
         if(dir_entry.is_regular_file() && dir_entry.path().extension() == ".csv") {
-            loadCSV(dir_entry.path());
+            loadCSV(dir_entry.path().string());
             counter++;
         }
     }

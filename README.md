@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/aachen-investment-club/backtest-cpp/actions/workflows/ci.yml/badge.svg)
 
-A high-performance, event-driven backtesting system for quantitative trading strategies built with C++17 (and up).  
+A high-performance, event-driven backtesting system for quantitative trading strategies built with C++20 (and up).  
 `IMPORTANT:` The ToDos here aren't Jira tickets that "need to be fixed asap". This is meant to be an educational project to build real C++ / SWE skills.  
 `TRY TO WRITE ALL CODE YOURSELF WITHOUT THE USE OF LLMs!`
 You may use llms for explanations and hints but try to really understand these concepts and type out the code yourself.
