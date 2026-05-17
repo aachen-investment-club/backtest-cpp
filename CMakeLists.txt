@@ -24,11 +24,21 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     # Debug: For GDB debugging
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
     
-    # Release: For fast execution
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+    # Release: For fast execution with hardware-specific optimizations
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native")
     
     # Optional: Release with debug info (fast but still debuggable)
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DNDEBUG -march=native")
+endif()
+
+# Enable LTO (Link Time Optimization) / IPO if supported
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT error)
+if(ipo_supported)
+    message(STATUS "LTO/IPO is supported and enabled.")
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+else()
+    message(WARNING "LTO/IPO is not supported: ${error}")
 endif()
 
 # ============================================================================
@@ -60,7 +70,6 @@ add_executable(backtest
     src/data.cpp
     src/utils.cpp
     src/portfolio.cpp
-    src/event.cpp
     ./strategies/SMACrossover.cpp
     src/performance.cpp
 )

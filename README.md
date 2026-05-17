@@ -42,7 +42,6 @@ The goal of this project is to build this rather standard backtester into a low-
 - [ ] (!) **Contiguous Data Structures:** Replace `std::map<std::string, Bar>` with `std::vector<Bar>` indexed by Instrument ID to eliminate cache misses from pointer chasing.
 - [ ] **High-Precision Time:** Replace `time_t` (seconds) with `std::chrono::nanoseconds` or `int64_t` (nanoseconds since epoch).
 - [ ] **Fast CSV Parsing:** Replace `std::stringstream` and `std::stod` with `std::from_chars` (C++17) for zero-allocation parsing.
-- [ ] **Compiler Flags:** Enforce `-O3 -march=native -flto` (Link Time Optimization) in CMake.
 
 ### Phase 2: Core Architecture (Zero-Allocation & Determinism)
 - [ ] (!) **Cache-Line Alignment & Padding:** Align `Bar` and `Position` structs to 64-byte boundaries (`alignas(64)`) to optimize CPU L1 cache fetch and prevent false sharing.
