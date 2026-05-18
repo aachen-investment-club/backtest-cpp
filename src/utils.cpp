@@ -24,11 +24,11 @@ int64_t parseDateTime(const std::string& datetime_str) {
         return 0;
     }
 
-    // Convert to time_t in UNIX seconds - REFACTOR SOON! This is slow.
-    std::time_t seconds = std::mktime(&tm);
+    // TODO: Custom parser needed instead of mktime!
+    auto tp = std::chrono::system_clock::from_time_t(std::mktime(&tm)); 
 
     // Convert to nanoseconds
-    return static_cast<int64_t>(seconds) * 1000000000LL;
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(tp.time_since_epoch()).count();
 }
 
 uint64_t getLineNumbers(const std::string& filepath) {
