@@ -2,9 +2,10 @@
 
 #include <vector>
 #include <ctime>
+#include <cstdint>
 
 struct EquityPoint {
-    time_t time;
+    int64_t time;
     double equity;
 };
 

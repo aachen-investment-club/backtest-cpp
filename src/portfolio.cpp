@@ -34,7 +34,7 @@ const double Portfolio::getTotalEquity(const std::map<std::string, Bar>& current
     return getInvestedValue(currentBars) + availableCash_;
 };
 
-std::vector<Order> Portfolio::getAllOrders(time_t fromTime) const {
+std::vector<Order> Portfolio::getAllOrders(int64_t fromTime) const {
     std::vector<Order> ordersWithinTimeline;
     for (const Order& order : orders_) {
         if (order.time >= fromTime) {

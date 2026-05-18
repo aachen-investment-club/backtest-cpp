@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <ctime>
+#include <cstdint>
 
 #include "data.h"
 #include "portfolio.h"
@@ -123,7 +124,7 @@ TEST_F(PortfolioTest, CheckOverdraftExactAmount) {
 // ============================================================================
 
 TEST_F(PortfolioTest, NoTradesReturnsZeroRealizedPnL) {
-    time_t now = std::time(nullptr);
+    int64_t now = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     double pnl = portfolio->getRealizedPnL();
     EXPECT_DOUBLE_EQ(pnl, 0.0);
 }
@@ -136,7 +137,7 @@ TEST_F(PortfolioTest, NoTradesReturnsZeroRealizedPnL) {
 // ============================================================================
 
 TEST_F(PortfolioTest, GetAllOrdersReturnsEmptyWhenNoOrders) {
-    time_t now = std::time(nullptr);
+    int64_t now = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     std::vector<Order> orders = portfolio->getAllOrders(now);
     EXPECT_TRUE(orders.empty());
 }

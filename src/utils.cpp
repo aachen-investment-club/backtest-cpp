@@ -24,7 +24,7 @@ int64_t parseDateTime(const std::string& datetime_str) {
         return 0;
     }
 
-    // Convert to time_t in UNIX seconds
+    // Convert to time_t in UNIX seconds - REFACTOR SOON! This is slow.
     std::time_t seconds = std::mktime(&tm);
 
     // Convert to nanoseconds

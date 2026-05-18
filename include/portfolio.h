@@ -3,6 +3,7 @@
 #include <map>
 #include <optional>
 #include <vector>
+#include <cstdint>
 
 #include "types.h"
 
@@ -22,7 +23,7 @@ class Portfolio {
     double getRealizedPnL() const;
     double getUnrealizedPnL(const std::map<std::string, Bar>& currentBars) const;
     bool checkOverdraft(const Order& order) const;
-    std::vector<Order> getAllOrders(time_t fromTime) const;
+    std::vector<Order> getAllOrders(int64_t fromTime) const;
     std::vector<Trade> getAllTrades() const;
     double getAvailableCash() const;
     void closeAllPositions(const std::map<std::string, Bar>& currentBars);
