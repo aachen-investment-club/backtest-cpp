@@ -1,13 +1,14 @@
 #include <gtest/gtest.h>
 #include <vector>
 #include <cmath>
+#include <cstdint>
 
 #include "performance.h"
 
 // Helper function to create a simple equity curve
-std::vector<EquityPoint> makeCurve(const std::vector<double>& equities, time_t startTime = 0, int step = 60) {
+std::vector<EquityPoint> makeCurve(const std::vector<double>& equities, int64_t startTime = 0, int step = 60) {
     std::vector<EquityPoint> curve;
-    time_t t = startTime;
+    int64_t t = startTime;
     for (double e : equities) {
         curve.push_back({t, e});
         t += step;
