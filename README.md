@@ -40,8 +40,9 @@ The goal of this project is to build this rather standard backtester into a low-
 - [IN PROGRESS] Refactor commission logic
 - [ ] (!) **Symbol Interning:** Replace `std::string` instrument keys with `uint32_t` IDs or Enums to remove string comparisons and allocations.
 - [ ] (!) **Contiguous Data Structures:** Replace `std::map<std::string, Bar>` with `std::vector<Bar>` indexed by Instrument ID to eliminate cache misses from pointer chasing.
-- [ ] **High-Precision Time:** Replace `time_t` (seconds) with `std::chrono::nanoseconds` or `int64_t` (nanoseconds since epoch).
+- [X] **High-Precision Time:** Replace `time_t` (seconds) with `std::chrono::nanoseconds` or `int64_t` (nanoseconds since epoch).
 - [ ] **Fast CSV Parsing:** Replace `std::stringstream` and `std::stod` with `std::from_chars` (C++17) for zero-allocation parsing.
+- [ ] **Custom String Parser:** Custom parser that reads datetime string and extracts year. month, day, etc as integers and mathematically calculates nanoseconds since 1970 WITHOUT touching std::tm 
 
 ### Phase 2: Core Architecture (Zero-Allocation & Determinism)
 - [ ] (!) **Cache-Line Alignment & Padding:** Align `Bar` and `Position` structs to 64-byte boundaries (`alignas(64)`) to optimize CPU L1 cache fetch and prevent false sharing.
