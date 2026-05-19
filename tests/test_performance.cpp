@@ -1,12 +1,14 @@
 #include <gtest/gtest.h>
-#include <vector>
+
 #include <cmath>
 #include <cstdint>
+#include <vector>
 
 #include "performance.h"
 
 // Helper function to create a simple equity curve
-std::vector<EquityPoint> makeCurve(const std::vector<double>& equities, int64_t startTime = 0, int step = 60) {
+std::vector<EquityPoint> makeCurve(const std::vector<double>& equities, int64_t startTime = 0,
+                                   int step = 60) {
     std::vector<EquityPoint> curve;
     int64_t t = startTime;
     for (double e : equities) {
@@ -20,7 +22,7 @@ std::vector<EquityPoint> makeCurve(const std::vector<double>& equities, int64_t 
 // Annualized Return Tests
 // -----------------------------
 TEST(PerformanceTest, AnnualizedReturnSimpleGrowth) {
-    auto curve = makeCurve({100, 101, 102.01}); // +1% per step
+    auto curve = makeCurve({100, 101, 102.01});  // +1% per step
     double annRet = Performance::annualizedReturn(curve, Frequency::DAILY);
     // Expected approx: (121/100)^(252/2) - 1
     EXPECT_NEAR(annRet, 11.247, 0.1);

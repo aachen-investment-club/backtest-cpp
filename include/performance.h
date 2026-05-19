@@ -1,39 +1,29 @@
 #pragma once
 
-#include <vector>
-#include <ctime>
 #include <cstdint>
+#include <ctime>
+#include <vector>
 
 struct EquityPoint {
     int64_t time;
     double equity;
 };
 
-enum class Frequency {
-    DAILY,
-    MINUTE,
-    HOURLY
-};
+enum class Frequency { DAILY, MINUTE, HOURLY };
 
 struct Annualization {
     double periodsPerYear;
 };
 
 class Performance {
-public:
-    static double annualizedReturn(
-        const std::vector<EquityPoint>& curve,
-        Frequency freq);
+   public:
+    static double annualizedReturn(const std::vector<EquityPoint>& curve, Frequency freq);
 
-    static double annualizedVolatility(
-        const std::vector<EquityPoint>& curve,
-        Frequency freq);
+    static double annualizedVolatility(const std::vector<EquityPoint>& curve, Frequency freq);
 
-    static double sharpeRatio(
-        const std::vector<EquityPoint>& curve,
-        Frequency freq,
-        double riskFreeRate = 0.0);
+    static double sharpeRatio(const std::vector<EquityPoint>& curve, Frequency freq,
+                              double riskFreeRate = 0.0);
 
-private:
+   private:
     static Annualization getAnnualization(Frequency freq);
 };

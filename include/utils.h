@@ -1,5 +1,5 @@
-#include <string>
 #include <chrono>
+#include <string>
 
 // String utilities
 std::string extractSymbolFromPath(const std::string& filepath);

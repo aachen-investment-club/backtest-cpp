@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <ctime>
 #include <cstdint>
+#include <ctime>
 
 #include "data.h"
 #include "portfolio.h"
@@ -124,7 +124,9 @@ TEST_F(PortfolioTest, CheckOverdraftExactAmount) {
 // ============================================================================
 
 TEST_F(PortfolioTest, NoTradesReturnsZeroRealizedPnL) {
-    int64_t now = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    int64_t now = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                      std::chrono::system_clock::now().time_since_epoch())
+                      .count();
     double pnl = portfolio->getRealizedPnL();
     EXPECT_DOUBLE_EQ(pnl, 0.0);
 }
@@ -137,7 +139,9 @@ TEST_F(PortfolioTest, NoTradesReturnsZeroRealizedPnL) {
 // ============================================================================
 
 TEST_F(PortfolioTest, GetAllOrdersReturnsEmptyWhenNoOrders) {
-    int64_t now = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    int64_t now = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                      std::chrono::system_clock::now().time_since_epoch())
+                      .count();
     std::vector<Order> orders = portfolio->getAllOrders(now);
     EXPECT_TRUE(orders.empty());
 }
@@ -218,7 +222,7 @@ TEST_F(PortfolioWithDataTest, CalculateEquityWithRealData) {
 TEST_F(PortfolioTest, CInitialState) {
     // Need to load data first!
     data->loadCSV("../data/Mini.csv", "NQ");  // Load data
-    data->getNextBars()["NQ"];                 // Move to first bar
+    data->getNextBars()["NQ"];                // Move to first bar
     std::map<std::string, Bar> bars = data->getNextBars();
 
     std::map<std::string, Bar> currentBars = data->getCurrentBars();  // Get the bar
@@ -231,8 +235,8 @@ TEST_F(PortfolioTest, CNoPositionsReturnsZeroInvestedValue) {
     data->loadCSV("../data/Mini.csv", "NQ");  // Load data
     data->getNextBars()["NQ"];
 
-    std::map<std::string, Bar> currentBars = data->getCurrentBars();                     // Get the bar
-    double invested = portfolio->getInvestedValue(currentBars);  // Pass bar
+    std::map<std::string, Bar> currentBars = data->getCurrentBars();  // Get the bar
+    double invested = portfolio->getInvestedValue(currentBars);       // Pass bar
 
     EXPECT_DOUBLE_EQ(invested, 0.0);
 }
@@ -241,8 +245,8 @@ TEST_F(PortfolioTest, CNoPositionsReturnsZeroUnrealizedPnL) {
     data->loadCSV("../data/Mini.csv", "NQ");  // Load data
     data->getNextBars()["NQ"];
 
-    std::map<std::string, Bar> currentBars = data->getCurrentBars();                // Get the bar
-    double pnl = portfolio->getUnrealizedPnL(currentBars);  // Pass bar
+    std::map<std::string, Bar> currentBars = data->getCurrentBars();  // Get the bar
+    double pnl = portfolio->getUnrealizedPnL(currentBars);            // Pass bar
 
     EXPECT_DOUBLE_EQ(pnl, 0.0);
 }
@@ -333,7 +337,6 @@ TEST_F(PortfolioTest, OpenShortPositionCorrectInvestedValue) {
 
     std::map<std::string, Bar> bars;
     bars.insert({"NQ", createTestBar("NQ", 95.0)});
-
 
     // Invested value = -10 * 95 = -950 → abs = 950
     EXPECT_DOUBLE_EQ(portfolio->getInvestedValue(bars), 950.0);

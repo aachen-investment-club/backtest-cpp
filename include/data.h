@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstring>
-#include <vector>
 #include <map>
+#include <vector>
 
 #include "types.h"
 
@@ -20,6 +20,6 @@ class DataHandler {
     size_t size() const;
 
    private:
-    std::vector<std::map<std::string, Bar>>  instrumentData_; // Loaded, synced data
-    size_t currentIndex_ = 0; // Current position in data
+    std::vector<std::map<std::string, Bar>> instrumentData_;  // Loaded, synced data
+    size_t currentIndex_ = 0;                                 // Current position in data
 };
