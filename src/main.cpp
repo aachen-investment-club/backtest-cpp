@@ -4,9 +4,9 @@
 #include <vector>
 
 #include "../strategies/smacrossover.h"
-#include "data.h"
-#include "performance.h"
-#include "portfolio.h"
+#include "backtest-cpp/data.h"
+#include "backtest-cpp/performance.h"
+#include "backtest-cpp/portfolio.h"
 
 int main() {
     std::cout << "=== Backtesting Engine ===" << std::endl;

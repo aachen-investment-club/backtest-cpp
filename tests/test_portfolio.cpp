@@ -3,9 +3,9 @@
 #include <cstdint>
 #include <ctime>
 
-#include "data.h"
-#include "portfolio.h"
-#include "types.h"
+#include "backtest-cpp/data.h"
+#include "backtest-cpp/portfolio.h"
+#include "backtest-cpp/types.h"
 
 // ============================================================================
 // Test Fixture - Reusable setup for tests

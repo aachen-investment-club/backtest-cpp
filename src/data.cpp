@@ -1,4 +1,4 @@
-#include "data.h"
+#include "backtest-cpp/data.h"
 
 #include <filesystem>
 #include <fstream>
@@ -7,7 +7,7 @@
 #include <sstream>
 #include <vector>
 
-#include "utils.h"
+#include "backtest-cpp/utils.h"
 
 void DataHandler::loadCSV(const std::string& filepath, std::string symbol = "") {
     std::ifstream file(filepath);

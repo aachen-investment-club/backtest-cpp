@@ -1,10 +1,10 @@
-#include "portfolio.h"
+#include "backtest-cpp/portfolio.h"
 
 #include <cmath>
 #include <iostream>
 #include <vector>
 
-#include "types.h"
+#include "backtest-cpp/types.h"
 
 Portfolio::Portfolio(const PortfolioConfig& config)
     : availableCash_(config.initialCash),

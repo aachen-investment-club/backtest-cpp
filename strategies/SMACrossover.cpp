@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "types.h"
+#include "backtest-cpp/types.h"
 
 SMACrossover::SMACrossover(int shortPeriod, int longPeriod)
     : shortPeriod_(shortPeriod), longPeriod_(longPeriod) {

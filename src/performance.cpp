@@ -1,4 +1,4 @@
-#include "performance.h"
+#include "backtest-cpp/performance.h"
 
 #include <cmath>
 #include <stdexcept>

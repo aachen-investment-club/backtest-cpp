@@ -5,7 +5,7 @@
 #include <optional>
 #include <vector>
 
-#include "types.h"
+#include "backtest-cpp/types.h"
 
 struct PortfolioConfig {
     double initialCash;

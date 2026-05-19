@@ -6,7 +6,7 @@
 #include <optional>
 #include <vector>
 
-#include "types.h"
+#include "backtest-cpp/types.h"
 
 class Strategy {
    public:

@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "performance.h"
+#include "backtest-cpp/performance.h"
 
 // Helper function to create a simple equity curve
 std::vector<EquityPoint> makeCurve(const std::vector<double>& equities, int64_t startTime = 0,
