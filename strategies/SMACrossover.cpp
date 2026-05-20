@@ -1,3 +1,5 @@
+#include "smacrossover.h"
+
 #include <cmath>
 #include <iostream>
 #include <map>
@@ -5,8 +7,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "types.h"
-#include "smacrossover.h"
+#include "backtest-cpp/types.h"
 
 SMACrossover::SMACrossover(int shortPeriod, int longPeriod)
     : shortPeriod_(shortPeriod), longPeriod_(longPeriod) {
@@ -17,7 +18,6 @@ SMACrossover::SMACrossover(int shortPeriod, int longPeriod)
 
 // onInit(const std::map<std::string, std::vector<Bar>>& availableData)
 void SMACrossover::onInit(const std::vector<std::map<std::string, Bar>>& availableData) {
-
     size_t n = availableData.size();
 
     if (n < static_cast<size_t>(longPeriod_)) {
@@ -48,16 +48,14 @@ void SMACrossover::onInit(const std::vector<std::map<std::string, Bar>>& availab
 }
 
 std::map<std::string, std::optional<Signal>> SMACrossover::onBars(
-         std::map<std::string, Bar>& bars,
-         std::map<std::string, Position>& positions) {
-
+    std::map<std::string, Bar>& bars, std::map<std::string, Position>& positions) {
     if (!initialized_) {
         return {};  // Not ready yet
     }
 
     std::map<std::string, std::optional<Signal>> signalMap;
 
-    for(const auto& [symbol, bar] : bars) {
+    for (const auto& [symbol, bar] : bars) {
         double newPrice = bars[symbol].close;
 
         // Indicator update Logic
@@ -85,7 +83,7 @@ std::map<std::string, std::optional<Signal>> SMACrossover::onBars(
         if (!previouslyAbove && currentlyAbove) {
             signalMap["NQ"] = Signal{bars[symbol].time, symbol, SignalType::BUY};
         } else if (previouslyAbove && !currentlyAbove) {
-            signalMap["NQ"] =  Signal{bars[symbol].time, symbol, SignalType::SELL};
+            signalMap["NQ"] = Signal{bars[symbol].time, symbol, SignalType::SELL};
         }
     }
 
@@ -118,14 +116,11 @@ Order SMACrossover::generateOrder(const Signal& signal, const Bar& currentBar,
 }
 
 std::map<std::string, Order> SMACrossover::generateOrders(
-      const std::map<std::string, Signal>& signals, 
-      const std::map<std::string, Bar>& currentBars,
-      const double& maxInvest,
-      std::map<std::string, Position>& positions) {
+    const std::map<std::string, Signal>& signals, const std::map<std::string, Bar>& currentBars,
+    const double& maxInvest, std::map<std::string, Position>& positions) {
+    std::map<std::string, Order> orderMap;
 
-      std::map<std::string, Order> orderMap;
-    
-      for(const auto& [symbol, signal] : signals) {
+    for (const auto& [symbol, signal] : signals) {
         // Get current position (can be positive, negative, or zero)
         int current_positionSize = 0;
         if (auto it = positions.find(symbol); it != positions.end()) {
@@ -146,10 +141,10 @@ std::map<std::string, Order> SMACrossover::generateOrders(
             quantity = -target_size - current_positionSize;
         }
 
-        orderMap[symbol] = Order{signal.time,      signal.symbol,     signal.type,
-                 currentBars.at(symbol).close, OrderType::MARKET, quantity};
-
-      }
+        orderMap[symbol] =
+            Order{signal.time,       signal.symbol, signal.type, currentBars.at(symbol).close,
+                  OrderType::MARKET, quantity};
+    }
 
     return orderMap;
 }

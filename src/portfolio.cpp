@@ -1,10 +1,10 @@
-#include "portfolio.h"
+#include "backtest-cpp/portfolio.h"
 
 #include <cmath>
 #include <iostream>
 #include <vector>
 
-#include "types.h"
+#include "backtest-cpp/types.h"
 
 Portfolio::Portfolio(const PortfolioConfig& config)
     : availableCash_(config.initialCash),
@@ -49,28 +49,26 @@ void Portfolio::closeAllPositions(const std::map<std::string, Bar>& currentBars)
     while (it != positions_.end()) {
         const std::string& symbol = it->first;
         const Position& position = it->second;
-        
+
         // Check if bar exists
         auto barIt = currentBars.find(symbol);
         if (barIt == currentBars.end()) {
             std::cerr << "WARNING: No price data for symbol " << symbol << std::endl;
             //++it;
-            //continue;
+            // continue;
         }
-        
+
         // Build order using const references (no copies)
-        Order closeOrder{
-            .time = barIt->second.time,
-            .symbol = symbol,
-            .direction = (position.quantity > 0) ? SignalType::SELL : SignalType::BUY,
-            .price = barIt->second.close,
-            .type = OrderType::MARKET,
-            .quantity = -position.quantity
-        };
-        
+        Order closeOrder{.time = barIt->second.time,
+                         .symbol = symbol,
+                         .direction = (position.quantity > 0) ? SignalType::SELL : SignalType::BUY,
+                         .price = barIt->second.close,
+                         .type = OrderType::MARKET,
+                         .quantity = -position.quantity};
+
         // CRITICAL: Increment iterator BEFORE executeOrder modifies positions_
         ++it;
-        
+
         executeOrder(closeOrder, true);
     }
 }
@@ -102,7 +100,9 @@ double Portfolio::getRealizedPnL() const {
 double Portfolio::getUnrealizedPnL(const std::map<std::string, Bar>& currentBars) const {
     double UnrealizedPnl = 0;
     for (const auto& [symbol, position] : positions_) {
-        UnrealizedPnl += position.quantity * (currentBars.at(symbol).close - position.averagePrice) - commission_;
+        UnrealizedPnl +=
+            position.quantity * (currentBars.at(symbol).close - position.averagePrice) -
+            commission_;
     }
     return UnrealizedPnl;
 }

@@ -3,8 +3,8 @@
 #include <ctime>
 #include <fstream>
 
-#include "data.h"
-#include "types.h"
+#include "backtest-cpp/data.h"
+#include "backtest-cpp/types.h"
 
 // ============================================================================
 // Test Fixture

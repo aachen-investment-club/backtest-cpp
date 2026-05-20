@@ -1,11 +1,11 @@
 #pragma once
 
+#include <cstdint>
 #include <map>
 #include <optional>
 #include <vector>
-#include <cstdint>
 
-#include "types.h"
+#include "backtest-cpp/types.h"
 
 struct PortfolioConfig {
     double initialCash;
@@ -28,7 +28,6 @@ class Portfolio {
     double getAvailableCash() const;
     void closeAllPositions(const std::map<std::string, Bar>& currentBars);
     void executeOrder(const Order& order, const bool close);
-
 
    private:
     double availableCash_ = 10000;

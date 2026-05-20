@@ -1,7 +1,7 @@
 #pragma once
+#include <cstdint>
 #include <ctime>
 #include <string>
-#include <cstdint>
 
 enum class SignalType { BUY, SELL, HOLD };
 

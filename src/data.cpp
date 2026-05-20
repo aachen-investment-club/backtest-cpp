@@ -1,12 +1,13 @@
+#include "backtest-cpp/data.h"
+
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include <filesystem>
 
-#include "data.h"
-#include "utils.h"
+#include "backtest-cpp/utils.h"
 
 void DataHandler::loadCSV(const std::string& filepath, std::string symbol = "") {
     std::ifstream file(filepath);
@@ -59,7 +60,7 @@ void DataHandler::loadCSV(const std::string& filepath, std::string symbol = "") 
 void DataHandler::loadAllCSVs(const std::string& directory) {
     int counter{0};
     for (auto const& dir_entry : std::filesystem::directory_iterator{directory}) {
-        if(dir_entry.is_regular_file() && dir_entry.path().extension() == ".csv") {
+        if (dir_entry.is_regular_file() && dir_entry.path().extension() == ".csv") {
             loadCSV(dir_entry.path().string());
             counter++;
         }
