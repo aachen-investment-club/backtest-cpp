@@ -7,12 +7,15 @@
 #include "backtest-cpp/portfolio.h"
 #include "backtest-cpp/types.h"
 
+const uint32_t NQ_ID = 0;
+
 // ============================================================================
 // Test Fixture - Reusable setup for tests
 // ============================================================================
 
 class PortfolioTest : public ::testing::Test {
    protected:
+    symbol_dictionary symDict;
     Portfolio* portfolio;
     DataHandler* data;
 
@@ -23,7 +26,7 @@ class PortfolioTest : public ::testing::Test {
             .commission = 2.7,
             .leverage = 1.0  // Optional, defaults to 1.0
         });
-        data = new DataHandler();
+        data = new DataHandler(symDict);
     }
 
     // Runs after each test
@@ -32,10 +35,10 @@ class PortfolioTest : public ::testing::Test {
         delete data;
     }
 
-    // UPDATED: Helper function to create a test bar (with symbol parameter)
-    Bar createTestBar(const std::string& symbol, double price) {
+    // UPDATED: Helper function to create a test bar (with symbol_id parameter)
+    Bar createTestBar(uint32_t symbol_id, double price) {
         Bar bar;
-        bar.symbol = symbol;
+        bar.symbol_id = symbol_id;
         bar.time = std::time(nullptr);
         bar.open = price;
         bar.high = price + 5;
@@ -47,14 +50,13 @@ class PortfolioTest : public ::testing::Test {
 
     // OVERLOAD: Keep original version for backward compatibility
     Bar createTestBar(double price) {
-        return createTestBar("NQ", price);
+        return createTestBar(NQ_ID, price);
     }
 
     // NEW: Helper function to create test orders
-    Order createTestOrder(const std::string& symbol, SignalType direction, double price,
-                          int quantity) {
+    Order createTestOrder(uint32_t symbol_id, SignalType direction, double price, int quantity) {
         return Order{.time = std::time(nullptr),
-                     .symbol = symbol,
+                     .symbol_id = symbol_id,
                      .direction = direction,
                      .price = price,
                      .type = OrderType::MARKET,
@@ -77,7 +79,7 @@ TEST_F(PortfolioTest, CheckOverdraftWithSufficientFunds) {
     // Should NOT overdraft
 
     Order order;
-    order.symbol = "NQ";
+    order.symbol_id = NQ_ID;
     order.time = std::time(nullptr);
     order.price = 100.0;
     order.direction = SignalType::BUY;
@@ -94,7 +96,7 @@ TEST_F(PortfolioTest, CheckOverdraftWithInsufficientFunds) {
 
     Order order;
     order.time = std::time(nullptr);
-    order.symbol = "NQ";
+    order.symbol_id = NQ_ID;
     order.direction = SignalType::BUY;
     order.price = 150.0;
     order.type = OrderType::MARKET;
@@ -108,7 +110,7 @@ TEST_F(PortfolioTest, CheckOverdraftExactAmount) {
     // 1000 * $99.973 + $2.70 = $100,000
 
     Order order;
-    order.symbol = "NQ";
+    order.symbol_id = NQ_ID;
     order.time = std::time(nullptr);
     order.price = 99.973;
     order.direction = SignalType::BUY;
@@ -152,7 +154,7 @@ TEST_F(PortfolioTest, GetAllOrdersReturnsEmptyWhenNoOrders) {
 
 TEST_F(PortfolioTest, ZeroQuantityOrderShouldNotOverdraft) {
     Order order;
-    order.symbol = "NQ";
+    order.symbol_id = NQ_ID;
     order.time = std::time(nullptr);
     order.price = 1000000.0;  // Huge price
     order.direction = SignalType::BUY;
@@ -167,7 +169,7 @@ TEST_F(PortfolioTest, ZeroQuantityOrderShouldNotOverdraft) {
 TEST_F(PortfolioTest, NegativeQuantityHandling) {
     // Test what happens with negative quantity (shouldn't happen, but test anyway)
     Order order;
-    order.symbol = "NQ";
+    order.symbol_id = NQ_ID;
     order.time = std::time(nullptr);
     order.price = 100.0;
     order.direction = SignalType::SELL;
@@ -189,12 +191,13 @@ TEST_F(PortfolioTest, NegativeQuantityHandling) {
 
 class PortfolioWithDataTest : public ::testing::Test {
    protected:
+    symbol_dictionary symDict;
     Portfolio* portfolio;
     DataHandler* data;
 
     void SetUp() override {
         portfolio = new Portfolio({.initialCash = 100000.0, .commission = 2.7});
-        data = new DataHandler();
+        data = new DataHandler(symDict);
 
         // TODO: Create a small test CSV file and load it
         // data->loadCSV("tests/test_data.csv");
@@ -209,10 +212,10 @@ class PortfolioWithDataTest : public ::testing::Test {
 // Example test that needs real data
 TEST_F(PortfolioWithDataTest, CalculateEquityWithRealData) {
     // Load test data
-    data->loadCSV("../data/Mini.csv", "NQ");
+    data->loadCSV("../data/Mini.csv", NQ_ID);
     data->getNextBars();
-    std::map<std::string, Bar> currentBars = data->getCurrentBars();
-    Bar currentBar = currentBars["NQ"];  // Extract NQ bar
+    std::map<uint32_t, Bar> currentBars = data->getCurrentBars();
+    Bar currentBar = currentBars[NQ_ID];  // Extract NQ bar
 
     // Check initial equity
     double equity = portfolio->getTotalEquity(currentBars);
@@ -221,32 +224,32 @@ TEST_F(PortfolioWithDataTest, CalculateEquityWithRealData) {
 
 TEST_F(PortfolioTest, CInitialState) {
     // Need to load data first!
-    data->loadCSV("../data/Mini.csv", "NQ");  // Load data
-    data->getNextBars()["NQ"];                // Move to first bar
-    std::map<std::string, Bar> bars = data->getNextBars();
+    data->loadCSV("../data/Mini.csv", NQ_ID);  // Load data
+    data->getNextBars()[NQ_ID];                // Move to first bar
+    std::map<uint32_t, Bar> bars = data->getNextBars();
 
-    std::map<std::string, Bar> currentBars = data->getCurrentBars();  // Get the bar
+    std::map<uint32_t, Bar> currentBars = data->getCurrentBars();  // Get the bar
 
     EXPECT_DOUBLE_EQ(portfolio->getTotalEquity(currentBars), 100000.0);  // Pass bar
     EXPECT_TRUE(portfolio->getCurrentPositions().empty());
 }
 
 TEST_F(PortfolioTest, CNoPositionsReturnsZeroInvestedValue) {
-    data->loadCSV("../data/Mini.csv", "NQ");  // Load data
-    data->getNextBars()["NQ"];
+    data->loadCSV("../data/Mini.csv", NQ_ID);  // Load data
+    data->getNextBars()[NQ_ID];
 
-    std::map<std::string, Bar> currentBars = data->getCurrentBars();  // Get the bar
-    double invested = portfolio->getInvestedValue(currentBars);       // Pass bar
+    std::map<uint32_t, Bar> currentBars = data->getCurrentBars();  // Get the bar
+    double invested = portfolio->getInvestedValue(currentBars);    // Pass bar
 
     EXPECT_DOUBLE_EQ(invested, 0.0);
 }
 
 TEST_F(PortfolioTest, CNoPositionsReturnsZeroUnrealizedPnL) {
-    data->loadCSV("../data/Mini.csv", "NQ");  // Load data
-    data->getNextBars()["NQ"];
+    data->loadCSV("../data/Mini.csv", NQ_ID);  // Load data
+    data->getNextBars()[NQ_ID];
 
-    std::map<std::string, Bar> currentBars = data->getCurrentBars();  // Get the bar
-    double pnl = portfolio->getUnrealizedPnL(currentBars);            // Pass bar
+    std::map<uint32_t, Bar> currentBars = data->getCurrentBars();  // Get the bar
+    double pnl = portfolio->getUnrealizedPnL(currentBars);         // Pass bar
 
     EXPECT_DOUBLE_EQ(pnl, 0.0);
 }
@@ -257,7 +260,7 @@ TEST_F(PortfolioTest, CNoPositionsReturnsZeroUnrealizedPnL) {
 
 TEST_F(PortfolioTest, OpenLongPositionDeductsCash) {
     // Open long: Buy 10 @ $100
-    Order order = createTestOrder("NQ", SignalType::BUY, 100.0, 10);
+    Order order = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(order, false);
 
     // Expected: 100,000 - (10 * 100 + 2.70) = 98,997.30
@@ -265,43 +268,43 @@ TEST_F(PortfolioTest, OpenLongPositionDeductsCash) {
 }
 
 TEST_F(PortfolioTest, OpenLongPositionCreatesPosition) {
-    Order order = createTestOrder("NQ", SignalType::BUY, 100.0, 10);
+    Order order = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(order, false);
 
     const auto& positions = portfolio->getCurrentPositions();
     ASSERT_EQ(positions.size(), 1);
-    EXPECT_EQ(positions.at("NQ").quantity, 10);
-    EXPECT_DOUBLE_EQ(positions.at("NQ").averagePrice, 100.0);
+    EXPECT_EQ(positions.at(NQ_ID).quantity, 10);
+    EXPECT_DOUBLE_EQ(positions.at(NQ_ID).averagePrice, 100.0);
 }
 
 TEST_F(PortfolioTest, OpenLongPositionCorrectInvestedValue) {
-    Order order = createTestOrder("NQ", SignalType::BUY, 100.0, 10);
+    Order order = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(order, false);
 
-    std::map<std::string, Bar> bars;
-    bars.insert({"NQ", createTestBar("NQ", 105.0)});
+    std::map<uint32_t, Bar> bars;
+    bars.insert({NQ_ID, createTestBar(NQ_ID, 105.0)});
 
     // Invested value = 10 * 105 = 1,050
     EXPECT_DOUBLE_EQ(portfolio->getInvestedValue(bars), 1050.0);
 }
 
 TEST_F(PortfolioTest, OpenLongPositionCorrectUnrealizedPnL) {
-    Order order = createTestOrder("NQ", SignalType::BUY, 100.0, 10);
+    Order order = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(order, false);
 
-    std::map<std::string, Bar> bars;
-    bars.insert({"NQ", createTestBar("NQ", 105.0)});
+    std::map<uint32_t, Bar> bars;
+    bars.insert({NQ_ID, createTestBar(NQ_ID, 105.0)});
 
     // Unrealized P&L = 10 * (105 - 100) = 50 - 2.7 commission
     EXPECT_DOUBLE_EQ(portfolio->getUnrealizedPnL(bars), 50.0 - 2.7);
 }
 
 TEST_F(PortfolioTest, OpenLongPositionCorrectTotalEquity) {
-    Order order = createTestOrder("NQ", SignalType::BUY, 100.0, 10);
+    Order order = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(order, false);
 
-    std::map<std::string, Bar> bars;
-    bars.insert({"NQ", createTestBar("NQ", 105.0)});
+    std::map<uint32_t, Bar> bars;
+    bars.insert({NQ_ID, createTestBar(NQ_ID, 105.0)});
 
     // Total equity = Cash + Invested Value
     // = 98,997.30 + 1,050 = 100,047.30
@@ -314,7 +317,7 @@ TEST_F(PortfolioTest, OpenLongPositionCorrectTotalEquity) {
 
 TEST_F(PortfolioTest, OpenShortPositionDeductsCash) {
     // Open short: Sell 10 @ $100
-    Order order = createTestOrder("NQ", SignalType::SELL, 100.0, -10);
+    Order order = createTestOrder(NQ_ID, SignalType::SELL, 100.0, -10);
     portfolio->executeOrder(order, false);
 
     // Expected: 100,000 - (10 * 100 + 2.70) = 98,997.30
@@ -322,43 +325,43 @@ TEST_F(PortfolioTest, OpenShortPositionDeductsCash) {
 }
 
 TEST_F(PortfolioTest, OpenShortPositionCreatesPosition) {
-    Order order = createTestOrder("NQ", SignalType::SELL, 100.0, -10);
+    Order order = createTestOrder(NQ_ID, SignalType::SELL, 100.0, -10);
     portfolio->executeOrder(order, false);
 
     const auto& positions = portfolio->getCurrentPositions();
     ASSERT_EQ(positions.size(), 1);
-    EXPECT_EQ(positions.at("NQ").quantity, -10);  // Negative for short
-    EXPECT_DOUBLE_EQ(positions.at("NQ").averagePrice, 100.0);
+    EXPECT_EQ(positions.at(NQ_ID).quantity, -10);  // Negative for short
+    EXPECT_DOUBLE_EQ(positions.at(NQ_ID).averagePrice, 100.0);
 }
 
 TEST_F(PortfolioTest, OpenShortPositionCorrectInvestedValue) {
-    Order order = createTestOrder("NQ", SignalType::SELL, 100.0, -10);
+    Order order = createTestOrder(NQ_ID, SignalType::SELL, 100.0, -10);
     portfolio->executeOrder(order, false);
 
-    std::map<std::string, Bar> bars;
-    bars.insert({"NQ", createTestBar("NQ", 95.0)});
+    std::map<uint32_t, Bar> bars;
+    bars.insert({NQ_ID, createTestBar(NQ_ID, 95.0)});
 
     // Invested value = -10 * 95 = -950 → abs = 950
     EXPECT_DOUBLE_EQ(portfolio->getInvestedValue(bars), 950.0);
 }
 
 TEST_F(PortfolioTest, OpenShortPositionCorrectUnrealizedPnL) {
-    Order order = createTestOrder("NQ", SignalType::SELL, 100.0, -10);
+    Order order = createTestOrder(NQ_ID, SignalType::SELL, 100.0, -10);
     portfolio->executeOrder(order, false);
 
-    std::map<std::string, Bar> bars;
-    bars.insert({"NQ", createTestBar("NQ", 95.0)});
+    std::map<uint32_t, Bar> bars;
+    bars.insert({NQ_ID, createTestBar(NQ_ID, 95.0)});
 
     // Unrealized P&L = -10 * (95 - 100) = -10 * -5 = 50 - 2.7 = 47.3 (profit)
     EXPECT_DOUBLE_EQ(portfolio->getUnrealizedPnL(bars), 50.0 - 2.7);
 }
 
 TEST_F(PortfolioTest, OpenShortPositionLosesMoneyWhenPriceRises) {
-    Order order = createTestOrder("NQ", SignalType::SELL, 100.0, -10);
+    Order order = createTestOrder(NQ_ID, SignalType::SELL, 100.0, -10);
     portfolio->executeOrder(order, false);
 
-    std::map<std::string, Bar> bars;
-    bars.insert({"NQ", createTestBar("NQ", 105.0)});
+    std::map<uint32_t, Bar> bars;
+    bars.insert({NQ_ID, createTestBar(NQ_ID, 105.0)});
 
     // Unrealized P&L = -10 * (105 - 100) = -10 * 5 = -50 (loss)
     EXPECT_DOUBLE_EQ(portfolio->getUnrealizedPnL(bars), -50.0 - 2.7);
@@ -370,7 +373,7 @@ TEST_F(PortfolioTest, OpenShortPositionLosesMoneyWhenPriceRises) {
 
 TEST_F(PortfolioTest, AvailableCashAfterLongOpen) {
     // Open: Buy 10 @ $100
-    Order openOrder = createTestOrder("NQ", SignalType::BUY, 100.0, 10);
+    Order openOrder = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(openOrder, false);
 
     // Portfolio value 100'000
@@ -381,7 +384,7 @@ TEST_F(PortfolioTest, AvailableCashAfterLongOpen) {
 
 TEST_F(PortfolioTest, AvailableCashAfterShortOpen) {
     // Open: Buy 10 @ $100
-    Order openOrder = createTestOrder("NQ", SignalType::SELL, 100.0, 10);
+    Order openOrder = createTestOrder(NQ_ID, SignalType::SELL, 100.0, 10);
     portfolio->executeOrder(openOrder, false);
 
     // Portfolio value 100'000
@@ -395,13 +398,13 @@ TEST_F(PortfolioTest, AvailableCashAfterShortOpen) {
 // ============================================================================
 
 TEST_F(PortfolioTest, CloseLongPositionWithProfit) {
-    Order openOrder = createTestOrder("NQ", SignalType::BUY, 100.0, 10);
+    Order openOrder = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(openOrder, false);
 
     double cashAfterOpen = portfolio->getAvailableCash();
     // std::cout << "Cash after open: " << cashAfterOpen << std::endl;
 
-    Order closeOrder = createTestOrder("NQ", SignalType::SELL, 110.0, -10);
+    Order closeOrder = createTestOrder(NQ_ID, SignalType::SELL, 110.0, -10);
     portfolio->executeOrder(closeOrder, true);
 
     double actualCash = portfolio->getAvailableCash();
@@ -412,10 +415,10 @@ TEST_F(PortfolioTest, CloseLongPositionWithProfit) {
 }
 
 TEST_F(PortfolioTest, CloseLongPositionRemovesPosition) {
-    Order openOrder = createTestOrder("NQ", SignalType::BUY, 100.0, 10);
+    Order openOrder = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(openOrder, false);
 
-    Order closeOrder = createTestOrder("NQ", SignalType::SELL, 110.0, -10);
+    Order closeOrder = createTestOrder(NQ_ID, SignalType::SELL, 110.0, -10);
     portfolio->executeOrder(closeOrder, true);
 
     // Position should be removed
@@ -423,10 +426,10 @@ TEST_F(PortfolioTest, CloseLongPositionRemovesPosition) {
 }
 
 TEST_F(PortfolioTest, CloseLongPositionCorrectRealizedPnL) {
-    Order openOrder = createTestOrder("NQ", SignalType::BUY, 100.0, 10);
+    Order openOrder = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(openOrder, false);
 
-    Order closeOrder = createTestOrder("NQ", SignalType::SELL, 110.0, -10);
+    Order closeOrder = createTestOrder(NQ_ID, SignalType::SELL, 110.0, -10);
     portfolio->executeOrder(closeOrder, true);
 
     // Realized P&L = 10 * (110 - 100) - 2.70 = 97.30
@@ -434,10 +437,10 @@ TEST_F(PortfolioTest, CloseLongPositionCorrectRealizedPnL) {
 }
 
 TEST_F(PortfolioTest, CloseLongPositionWithLoss) {
-    Order openOrder = createTestOrder("NQ", SignalType::BUY, 100.0, 10);
+    Order openOrder = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(openOrder, false);
 
-    Order closeOrder = createTestOrder("NQ", SignalType::SELL, 95.0, -10);
+    Order closeOrder = createTestOrder(NQ_ID, SignalType::SELL, 95.0, -10);
     portfolio->executeOrder(closeOrder, true);
 
     // P&L = 10 * (95 - 100) - 2.70 = -52.70
@@ -445,19 +448,19 @@ TEST_F(PortfolioTest, CloseLongPositionWithLoss) {
 }
 
 TEST_F(PortfolioTest, CloseLongPositionTotalEquityConservation) {
-    std::map<std::string, Bar> bars1;
-    bars1.insert({"NQ", createTestBar("NQ", 100.0)});
+    std::map<uint32_t, Bar> bars1;
+    bars1.insert({NQ_ID, createTestBar(NQ_ID, 100.0)});
 
     double initialEquity = portfolio->getTotalEquity(bars1);
 
-    Order openOrder = createTestOrder("NQ", SignalType::BUY, 100.0, 10);
+    Order openOrder = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(openOrder, true);
 
-    Order closeOrder = createTestOrder("NQ", SignalType::SELL, 110.0, -10);
+    Order closeOrder = createTestOrder(NQ_ID, SignalType::SELL, 110.0, -10);
     portfolio->executeOrder(closeOrder, true);
 
-    std::map<std::string, Bar> bars2;
-    bars2.insert({"NQ", createTestBar("NQ", 110.0)});
+    std::map<uint32_t, Bar> bars2;
+    bars2.insert({NQ_ID, createTestBar(NQ_ID, 110.0)});
     double finalEquity = portfolio->getTotalEquity(bars2);
 
     // Final equity = Initial + Realized P&L
@@ -470,11 +473,11 @@ TEST_F(PortfolioTest, CloseLongPositionTotalEquityConservation) {
 
 TEST_F(PortfolioTest, CloseShortPositionWithProfit) {
     // Open: Sell 10 @ $100
-    Order openOrder = createTestOrder("NQ", SignalType::SELL, 100.0, -10);
+    Order openOrder = createTestOrder(NQ_ID, SignalType::SELL, 100.0, -10);
     portfolio->executeOrder(openOrder, false);
 
     // Close: Buy 10 @ $90
-    Order closeOrder = createTestOrder("NQ", SignalType::BUY, 90.0, 10);
+    Order closeOrder = createTestOrder(NQ_ID, SignalType::BUY, 90.0, 10);
     portfolio->executeOrder(closeOrder, true);
 
     // P&L = -10 * (90 - 100) - 2.70 = 100 - 2.70 = 97.30
@@ -482,10 +485,10 @@ TEST_F(PortfolioTest, CloseShortPositionWithProfit) {
 }
 
 TEST_F(PortfolioTest, CloseShortPositionWithLoss) {
-    Order openOrder = createTestOrder("NQ", SignalType::SELL, 100.0, -10);
+    Order openOrder = createTestOrder(NQ_ID, SignalType::SELL, 100.0, -10);
     portfolio->executeOrder(openOrder, false);
 
-    Order closeOrder = createTestOrder("NQ", SignalType::BUY, 105.0, 10);
+    Order closeOrder = createTestOrder(NQ_ID, SignalType::BUY, 105.0, 10);
     portfolio->executeOrder(closeOrder, true);
 
     // P&L = -10 * (105 - 100) - 2.70 = -50 - 2.70 = -52.70
@@ -498,24 +501,24 @@ TEST_F(PortfolioTest, CloseShortPositionWithLoss) {
 
 TEST_F(PortfolioTest, ReverseLongToShort) {
     // Open: Buy 10 @ $100
-    Order openOrder = createTestOrder("NQ", SignalType::BUY, 100.0, 10);
+    Order openOrder = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(openOrder, false);
 
     // Reverse: Sell 20 @ $110 (closes 10 long, opens 10 short)
-    Order reverseOrder = createTestOrder("NQ", SignalType::SELL, 110.0, -20);
+    Order reverseOrder = createTestOrder(NQ_ID, SignalType::SELL, 110.0, -20);
     portfolio->executeOrder(reverseOrder, false);
 
     // Should now be short 10
     const auto& positions = portfolio->getCurrentPositions();
-    EXPECT_EQ(positions.at("NQ").quantity, -10);
-    EXPECT_DOUBLE_EQ(positions.at("NQ").averagePrice, 110.0);
+    EXPECT_EQ(positions.at(NQ_ID).quantity, -10);
+    EXPECT_DOUBLE_EQ(positions.at(NQ_ID).averagePrice, 110.0);
 }
 
 TEST_F(PortfolioTest, ReverseLongToShortCorrectPnL) {
-    Order openOrder = createTestOrder("NQ", SignalType::BUY, 100.0, 10);
+    Order openOrder = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(openOrder, false);
 
-    Order reverseOrder = createTestOrder("NQ", SignalType::SELL, 110.0, -20);
+    Order reverseOrder = createTestOrder(NQ_ID, SignalType::SELL, 110.0, -20);
     portfolio->executeOrder(reverseOrder, false);
 
     // P&L from closing long = 10 * (110 - 100) - 2.70 = 97.30
@@ -523,12 +526,12 @@ TEST_F(PortfolioTest, ReverseLongToShortCorrectPnL) {
 }
 
 TEST_F(PortfolioTest, ReverseLongToShortCorrectCash) {
-    Order openOrder = createTestOrder("NQ", SignalType::BUY, 100.0, 10);
+    Order openOrder = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(openOrder, false);
 
     double cashAfterOpen = portfolio->getAvailableCash();
 
-    Order reverseOrder = createTestOrder("NQ", SignalType::SELL, 110.0, -20);
+    Order reverseOrder = createTestOrder(NQ_ID, SignalType::SELL, 110.0, -20);
     portfolio->executeOrder(reverseOrder, false);
 
     // Cash flow:
@@ -544,24 +547,24 @@ TEST_F(PortfolioTest, ReverseLongToShortCorrectCash) {
 
 TEST_F(PortfolioTest, ReverseShortToLong) {
     // Open: Sell 10 @ $100
-    Order openOrder = createTestOrder("NQ", SignalType::SELL, 100.0, -10);
+    Order openOrder = createTestOrder(NQ_ID, SignalType::SELL, 100.0, -10);
     portfolio->executeOrder(openOrder, false);
 
     // Reverse: Buy 20 @ $90 (closes 10 short, opens 10 long)
-    Order reverseOrder = createTestOrder("NQ", SignalType::BUY, 90.0, 20);
+    Order reverseOrder = createTestOrder(NQ_ID, SignalType::BUY, 90.0, 20);
     portfolio->executeOrder(reverseOrder, false);
 
     // Should now be long 10
     const auto& positions = portfolio->getCurrentPositions();
-    EXPECT_EQ(positions.at("NQ").quantity, 10);
-    EXPECT_DOUBLE_EQ(positions.at("NQ").averagePrice, 90.0);
+    EXPECT_EQ(positions.at(NQ_ID).quantity, 10);
+    EXPECT_DOUBLE_EQ(positions.at(NQ_ID).averagePrice, 90.0);
 }
 
 TEST_F(PortfolioTest, ReverseShortToLongCorrectPnL) {
-    Order openOrder = createTestOrder("NQ", SignalType::SELL, 100.0, -10);
+    Order openOrder = createTestOrder(NQ_ID, SignalType::SELL, 100.0, -10);
     portfolio->executeOrder(openOrder, false);
 
-    Order reverseOrder = createTestOrder("NQ", SignalType::BUY, 90.0, 20);
+    Order reverseOrder = createTestOrder(NQ_ID, SignalType::BUY, 90.0, 20);
     portfolio->executeOrder(reverseOrder, false);
 
     // P&L from closing short = -10 * (90 - 100) - 2.70 = 100 - 2.70 = 97.30
@@ -574,18 +577,18 @@ TEST_F(PortfolioTest, ReverseShortToLongCorrectPnL) {
 
 TEST_F(PortfolioTest, MultipleTradesCorrectTotalPnL) {
     // Trade 1: Long, profit
-    portfolio->executeOrder(createTestOrder("NQ", SignalType::BUY, 100.0, 10), false);
-    portfolio->executeOrder(createTestOrder("NQ", SignalType::SELL, 110.0, -10), true);
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10), false);
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::SELL, 110.0, -10), true);
     double pnl1 = portfolio->getRealizedPnL();
 
     // Trade 2: Short, profit
-    portfolio->executeOrder(createTestOrder("NQ", SignalType::SELL, 110.0, -10), false);
-    portfolio->executeOrder(createTestOrder("NQ", SignalType::BUY, 100.0, 10), true);
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::SELL, 110.0, -10), false);
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10), true);
     double pnl2 = portfolio->getRealizedPnL();
 
     // Trade 3: Long, loss
-    portfolio->executeOrder(createTestOrder("NQ", SignalType::BUY, 100.0, 10), false);
-    portfolio->executeOrder(createTestOrder("NQ", SignalType::SELL, 95.0, -10), true);
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10), false);
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::SELL, 95.0, -10), true);
     double pnl3 = portfolio->getRealizedPnL();
 
     // Total P&L should be cumulative
@@ -595,18 +598,18 @@ TEST_F(PortfolioTest, MultipleTradesCorrectTotalPnL) {
 }
 
 TEST_F(PortfolioTest, EquityConservationAcrossMultipleTrades) {
-    std::map<std::string, Bar> initialBars;
-    initialBars.insert({"NQ", createTestBar("NQ", 100.0)});
+    std::map<uint32_t, Bar> initialBars;
+    initialBars.insert({NQ_ID, createTestBar(NQ_ID, 100.0)});
     double initialEquity = portfolio->getTotalEquity(initialBars);
 
     // Execute several trades
-    portfolio->executeOrder(createTestOrder("NQ", SignalType::BUY, 100.0, 10), false);
-    portfolio->executeOrder(createTestOrder("NQ", SignalType::SELL, 110.0, -20), false);
-    portfolio->executeOrder(createTestOrder("NQ", SignalType::BUY, 105.0, 20), false);
-    portfolio->executeOrder(createTestOrder("NQ", SignalType::SELL, 108.0, -10), true);
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10), false);
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::SELL, 110.0, -20), false);
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::BUY, 105.0, 20), false);
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::SELL, 108.0, -10), true);
 
-    std::map<std::string, Bar> finalBars;
-    finalBars.insert({"NQ", createTestBar("NQ", 180.0)});
+    std::map<uint32_t, Bar> finalBars;
+    finalBars.insert({NQ_ID, createTestBar(NQ_ID, 180.0)});
     double finalEquity = portfolio->getTotalEquity(finalBars);
     double realizedPnL = portfolio->getRealizedPnL();
 
@@ -621,7 +624,7 @@ TEST_F(PortfolioTest, EquityConservationAcrossMultipleTrades) {
 TEST_F(PortfolioTest, ZeroQuantityOrderDoesNothing) {
     double initialCash = portfolio->getAvailableCash();
 
-    Order order = createTestOrder("NQ", SignalType::BUY, 100.0, 0);
+    Order order = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 0);
     portfolio->executeOrder(order, false);
 
     EXPECT_DOUBLE_EQ(portfolio->getAvailableCash(), initialCash);
@@ -630,7 +633,7 @@ TEST_F(PortfolioTest, ZeroQuantityOrderDoesNothing) {
 
 TEST_F(PortfolioTest, InsufficientFundsBlocksOrder) {
     // Try to buy way more than we can afford
-    Order order = createTestOrder("NQ", SignalType::BUY, 100.0, 10000);
+    Order order = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10000);
     portfolio->executeOrder(order, false);
 
     // Should not create position

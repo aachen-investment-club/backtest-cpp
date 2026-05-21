@@ -7,6 +7,10 @@
 #include "backtest-cpp/data.h"
 #include "backtest-cpp/performance.h"
 #include "backtest-cpp/portfolio.h"
+#include "backtest-cpp/symbol_dictionary.h"
+
+std::map<std::string, uint32_t> symbolToId = {{"NQ", 0}, {"ES", 1}};
+uint32_t nq_id = symbolToId["NQ"];
 
 int main() {
     std::cout << "=== Backtesting Engine ===" << std::endl;
@@ -14,19 +18,20 @@ int main() {
     // -------------------------------------------------
     // Initialization
     // -------------------------------------------------
-    DataHandler dataHandler;
+    symbol_dictionary symDict;
+    DataHandler dataHandler(symDict);
     Portfolio portfolio({.initialCash = 100'000.0, .commission = 2.7, .leverage = 1.0});
 
-    SMACrossover strategy(10, 30);
+    SMACrossover strategy(nq_id, 10, 30);
 
-    // dataHandler.loadCSV("../data/Mini.csv", "NQ");
-    dataHandler.loadCSV("../data/NQ_sample.csv", "NQ");
+    // dataHandler.loadCSV("../data/Mini.csv", "nq_id");
+    dataHandler.loadCSV("../data/NQ_sample.csv", nq_id);
     // dataHandler.loadAllCSVs("../data");
 
     // -------------------------------------------------
     // Strategy warm-up (SMA lookback)
     // -------------------------------------------------
-    std::vector<std::map<std::string, Bar>> historicalData;
+    std::vector<std::map<uint32_t, Bar>> historicalData;
 
     for (int i = 0; i < 30 && dataHandler.hasMoreData(); ++i) {
         std::cout << "Added Bar" << std::endl;
@@ -48,15 +53,15 @@ int main() {
     // Main backtest loop
     // -------------------------------------------------
     while (dataHandler.hasMoreData()) {
-        std::map<std::string, Bar> bars = dataHandler.getNextBars();
+        std::map<uint32_t, Bar> bars = dataHandler.getNextBars();
 
-        auto posIt = portfolio.getCurrentPositions().find("NQ");
-        if (posIt != portfolio.getCurrentPositions().end() && bars.find("NQ") == bars.end()) {
+        auto posIt = portfolio.getCurrentPositions().find(nq_id);
+        if (posIt != portfolio.getCurrentPositions().end() && bars.find(nq_id) == bars.end()) {
             std::cerr << "BUG: Have NQ position but bars doesn't contain NQ at bar " << barCount
                       << std::endl;
         }
 
-        std::map<std::string, std::optional<Signal>> signalMap =
+        std::map<uint32_t, std::optional<Signal>> signalMap =
             strategy.onBars(bars, portfolio.getCurrentPositions());
 
         for (const auto& [symbol, signal] : signalMap) {
@@ -81,7 +86,7 @@ int main() {
 
                 std::cout << "DEBUG: equity: " << portfolio.getTotalEquity(bars) << std::endl;
 
-                auto it = portfolio.getCurrentPositions().find("NQ");
+                auto it = portfolio.getCurrentPositions().find(nq_id);
                 std::cout << "INFO | Total Positions After: "
                           << (it != portfolio.getCurrentPositions().end() ? it->second.quantity : 0)
                           << std::endl;
@@ -101,7 +106,7 @@ int main() {
     // -------------------------------------------------
     // Final liquidation
     // -------------------------------------------------
-    std::map<std::string, Bar> finalBars = dataHandler.getCurrentBars();
+    std::map<uint32_t, Bar> finalBars = dataHandler.getCurrentBars();
     portfolio.closeAllPositions(finalBars);
 
     equityCurve.push_back({finalBars.begin()->second.time, portfolio.getTotalEquity(finalBars)});

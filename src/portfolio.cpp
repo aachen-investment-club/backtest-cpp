@@ -11,18 +11,18 @@ Portfolio::Portfolio(const PortfolioConfig& config)
       commission_(config.commission),
       leverage_(config.leverage) {}
 
-std::map<std::string, Position>& Portfolio::getCurrentPositions() {
+std::map<std::uint32_t, Position>& Portfolio::getCurrentPositions() {
     return positions_;
 };
 
-const double Portfolio::getInvestedValue(const std::map<std::string, Bar>& currentBars) const {
+const double Portfolio::getInvestedValue(const std::map<std::uint32_t, Bar>& currentBars) const {
     double totalPositionValue = 0;
-    for (const auto& [symbol, position] : positions_) {
+    for (const auto& [symbol_id, position] : positions_) {
         // std::cout << "CurrentBars.size() " << currentBars.size() << std::endl;
-        auto it = currentBars.find(symbol);
+        auto it = currentBars.find(symbol_id);
         if (it == currentBars.end()) {
             // Use last known price or throw error - don't just skip!
-            std::cerr << "ERROR: Missing price for position " << symbol << std::endl;
+            std::cerr << "ERROR: Missing price for position " << symbol_id << std::endl;
             // throw std::runtime_error("Cannot calculate equity without price");
         }
         totalPositionValue += position.quantity * it->second.close;
@@ -30,7 +30,7 @@ const double Portfolio::getInvestedValue(const std::map<std::string, Bar>& curre
     return fabs(totalPositionValue);
 }
 
-const double Portfolio::getTotalEquity(const std::map<std::string, Bar>& currentBars) const {
+const double Portfolio::getTotalEquity(const std::map<std::uint32_t, Bar>& currentBars) const {
     return getInvestedValue(currentBars) + availableCash_;
 };
 
@@ -44,23 +44,23 @@ std::vector<Order> Portfolio::getAllOrders(int64_t fromTime) const {
     return ordersWithinTimeline;
 };
 
-void Portfolio::closeAllPositions(const std::map<std::string, Bar>& currentBars) {
+void Portfolio::closeAllPositions(const std::map<std::uint32_t, Bar>& currentBars) {
     auto it = positions_.begin();
     while (it != positions_.end()) {
-        const std::string& symbol = it->first;
+        const uint32_t symbol_id = it->first;
         const Position& position = it->second;
 
         // Check if bar exists
-        auto barIt = currentBars.find(symbol);
+        auto barIt = currentBars.find(symbol_id);
         if (barIt == currentBars.end()) {
-            std::cerr << "WARNING: No price data for symbol " << symbol << std::endl;
+            std::cerr << "WARNING: No price data for symbol " << symbol_id << std::endl;
             //++it;
             // continue;
         }
 
         // Build order using const references (no copies)
         Order closeOrder{.time = barIt->second.time,
-                         .symbol = symbol,
+                         .symbol_id = symbol_id,
                          .direction = (position.quantity > 0) ? SignalType::SELL : SignalType::BUY,
                          .price = barIt->second.close,
                          .type = OrderType::MARKET,
@@ -74,11 +74,11 @@ void Portfolio::closeAllPositions(const std::map<std::string, Bar>& currentBars)
 }
 
 bool Portfolio::checkOverdraft(const Order& order) const {
-    auto posIt = positions_.find(order.symbol);
+    auto posIt = positions_.find(order.symbol_id);
     bool hasPosition = (posIt != positions_.end());
 
     if (hasPosition) {
-        const Position& pos = positions_.at(order.symbol);
+        const Position& pos = positions_.at(order.symbol_id);
         int netPositionSize = pos.quantity + order.quantity;
 
         return (abs(netPositionSize) * order.price + commission_ >
@@ -97,18 +97,18 @@ double Portfolio::getRealizedPnL() const {
     return totalPnl;
 }
 
-double Portfolio::getUnrealizedPnL(const std::map<std::string, Bar>& currentBars) const {
+double Portfolio::getUnrealizedPnL(const std::map<std::uint32_t, Bar>& currentBars) const {
     double UnrealizedPnl = 0;
-    for (const auto& [symbol, position] : positions_) {
+    for (const auto& [symbol_id, position] : positions_) {
         UnrealizedPnl +=
-            position.quantity * (currentBars.at(symbol).close - position.averagePrice) -
+            position.quantity * (currentBars.at(symbol_id).close - position.averagePrice) -
             commission_;
     }
     return UnrealizedPnl;
 }
 
 void Portfolio::executeOrder(const Order& order, const bool close = false) {
-    auto posIt = positions_.find(order.symbol);
+    auto posIt = positions_.find(order.symbol_id);
     bool hasPosition = (posIt != positions_.end());
 
     if (order.quantity == 0) {
@@ -123,8 +123,8 @@ void Portfolio::executeOrder(const Order& order, const bool close = false) {
 
     // NEW POSITION
     if (!hasPosition) {
-        positions_[order.symbol] = Position{
-            .symbol = order.symbol,
+        positions_[order.symbol_id] = Position{
+            .symbol_id = order.symbol_id,
             .quantity = order.quantity,
             .averagePrice = order.price,
             .direction = (order.quantity > 0) ? SignalType::BUY : SignalType::SELL,
@@ -135,7 +135,7 @@ void Portfolio::executeOrder(const Order& order, const bool close = false) {
 
         // Adjust position
     } else {
-        Position& pos = positions_[order.symbol];
+        Position& pos = positions_[order.symbol_id];
 
         // Add to position
         if (order.direction == SignalType::BUY && pos.direction == SignalType::BUY ||
@@ -155,9 +155,9 @@ void Portfolio::executeOrder(const Order& order, const bool close = false) {
                                     .quantity = closedQuantity,
                                     .pnl = tradePnl,
                                     .commission = commission_});
-            std::cout << "Logged Trade | "
-                      << "Closed: " << closedQuantity << " Entered @ " << pos.averagePrice
-                      << " Exited @ " << order.price << " P&L: " << tradePnl << std::endl;
+            std::cout << "Logged Trade | " << "Closed: " << closedQuantity << " Entered @ "
+                      << pos.averagePrice << " Exited @ " << order.price << " P&L: " << tradePnl
+                      << std::endl;
 
             availableCash_ += (abs(closedQuantity) * pos.averagePrice + tradePnl + commission_);
 
@@ -173,7 +173,7 @@ void Portfolio::executeOrder(const Order& order, const bool close = false) {
 
             // Remove Empty Position
             if (netPositionSize == 0) {
-                positions_.erase(order.symbol);
+                positions_.erase(order.symbol_id);
             }
         }
     }
