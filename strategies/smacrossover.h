@@ -4,20 +4,22 @@
 
 class SMACrossover : public Strategy {
    public:
-    SMACrossover(int shortPeriod = 10, int longPeriod = 30);
+    SMACrossover(uint32_t symbold_id, int shortPeriod = 10, int longPeriod = 30);
 
-    void onInit(const std::vector<std::map<std::string, Bar>>& availableData) override;
+    void onInit(const std::vector<std::map<uint32_t, Bar>>& availableData) override;
 
-    std::map<std::string, std::optional<Signal>> onBars(
-        std::map<std::string, Bar>& bars, std::map<std::string, Position>& positions) override;
+    std::map<uint32_t, std::optional<Signal>> onBars(
+        std::map<uint32_t, Bar>& bars, std::map<uint32_t, Position>& positions) override;
     Order generateOrder(const Signal& signal, const Bar& currentBar, const double& maxInvest,
-                        std::map<std::string, Position>& positions) override;
+                        std::map<uint32_t, Position>& positions) override;
 
-    std::map<std::string, Order> generateOrders(
-        const std::map<std::string, Signal>& signals, const std::map<std::string, Bar>& currentBars,
-        const double& maxInvest, std::map<std::string, Position>& positions) override;
+    std::map<uint32_t, Order> generateOrders(const std::map<uint32_t, Signal>& signals,
+                                             const std::map<uint32_t, Bar>& currentBars,
+                                             const double& maxInvest,
+                                             std::map<uint32_t, Position>& positions) override;
 
    private:
+    uint32_t symbol_id;
     int shortPeriod_;
     int longPeriod_;
 

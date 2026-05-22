@@ -6,17 +6,21 @@
 #include "backtest-cpp/data.h"
 #include "backtest-cpp/types.h"
 
+const uint32_t NQ_ID = 0;
+const uint32_t SECOND_ID = 1;
+
 // ============================================================================
 // Test Fixture
 // ============================================================================
 
 class DataHandlerTest : public ::testing::Test {
    protected:
+    symbol_dictionary symDict;
     DataHandler* data;
     std::string testFilePath;
 
     void SetUp() override {
-        data = new DataHandler();
+        data = new DataHandler(symDict);
         testFilePath = "test_data_temp.csv";
     }
 
@@ -70,7 +74,7 @@ TEST_F(DataHandlerTest, InitialState) {
 TEST_F(DataHandlerTest, LoadCSVWithValidData) {
     createTestCSV(5);
 
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
     EXPECT_EQ(data->size(), 5);
     EXPECT_TRUE(data->hasMoreData());
@@ -79,7 +83,7 @@ TEST_F(DataHandlerTest, LoadCSVWithValidData) {
 TEST_F(DataHandlerTest, LoadCSVMultipleBars) {
     createTestCSV(100);
 
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
     EXPECT_EQ(data->size(), 100);
 }
@@ -87,10 +91,10 @@ TEST_F(DataHandlerTest, LoadCSVMultipleBars) {
 TEST_F(DataHandlerTest, LoadCSVSetsCorrectValues) {
     createTestCSV(1);
 
-    data->loadCSV(testFilePath, "NQ");
-    Bar bar = data->getNextBars()["NQ"];
+    data->loadCSV(testFilePath, NQ_ID);
+    Bar bar = data->getNextBars()[NQ_ID];
 
-    EXPECT_EQ(bar.symbol, "NQ");
+    EXPECT_EQ(bar.symbol_id, NQ_ID);
     EXPECT_DOUBLE_EQ(bar.open, 3700.0);
     EXPECT_DOUBLE_EQ(bar.high, 3710.0);
     EXPECT_DOUBLE_EQ(bar.low, 3690.0);
@@ -100,7 +104,7 @@ TEST_F(DataHandlerTest, LoadCSVSetsCorrectValues) {
 
 TEST_F(DataHandlerTest, LoadCSVNonExistentFile) {
     // Should handle gracefully, not crash
-    data->loadCSV("this_file_does_not_exist.csv", "Not_there");
+    data->loadCSV("this_file_does_not_exist.csv", NQ_ID);
 
     EXPECT_EQ(data->size(), 0);
 }
@@ -111,7 +115,7 @@ TEST_F(DataHandlerTest, LoadCSVEmptyFile) {
     file << "timestamp,open,high,low,close,volume\n";
     file.close();
 
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
     EXPECT_EQ(data->size(), 0);
 }
@@ -125,7 +129,7 @@ TEST_F(DataHandlerTest, LoadCSVSkipsInvalidRows) {
     file << "1609462800,3715,3725,3705,3720,101000\n";  // Valid
     file.close();
 
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
     // Should load 2 valid bars, skip the invalid one
     EXPECT_EQ(data->size(), 2);
@@ -137,11 +141,11 @@ TEST_F(DataHandlerTest, LoadCSVSkipsInvalidRows) {
 
 TEST_F(DataHandlerTest, GetNextBarReturnsSequentially) {
     createTestCSV(3);
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
-    Bar bar1 = data->getNextBars()["NQ"];
-    Bar bar2 = data->getNextBars()["NQ"];
-    Bar bar3 = data->getNextBars()["NQ"];
+    Bar bar1 = data->getNextBars()[NQ_ID];
+    Bar bar2 = data->getNextBars()[NQ_ID];
+    Bar bar3 = data->getNextBars()[NQ_ID];
 
     EXPECT_DOUBLE_EQ(bar1.close, 3705.0);
     EXPECT_DOUBLE_EQ(bar2.close, 3706.0);
@@ -150,36 +154,36 @@ TEST_F(DataHandlerTest, GetNextBarReturnsSequentially) {
 
 TEST_F(DataHandlerTest, GetNextBarAdvancesIndex) {
     createTestCSV(5);
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
     EXPECT_TRUE(data->hasMoreData());
 
-    data->getNextBars()["NQ"];
+    data->getNextBars()[NQ_ID];
     EXPECT_TRUE(data->hasMoreData());  // 4 left
 
-    data->getNextBars()["NQ"];
+    data->getNextBars()[NQ_ID];
     EXPECT_TRUE(data->hasMoreData());  // 3 left
 
-    data->getNextBars()["NQ"];
-    data->getNextBars()["NQ"];
-    data->getNextBars()["NQ"];
+    data->getNextBars()[NQ_ID];
+    data->getNextBars()[NQ_ID];
+    data->getNextBars()[NQ_ID];
 
     EXPECT_FALSE(data->hasMoreData());  // All consumed
 }
 
 TEST_F(DataHandlerTest, GetNextBarThrowsWhenNoMoreData) {
     createTestCSV(1);
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
-    data->getNextBars()["NQ"];  // Get the only bar
+    data->getNextBars()[NQ_ID];  // Get the only bar
 
     // Should throw when trying to get another
-    EXPECT_THROW(data->getNextBars()["NQ"], std::out_of_range);
+    EXPECT_THROW(data->getNextBars()[NQ_ID], std::out_of_range);
 }
 
 TEST_F(DataHandlerTest, GetNextBarOnEmptyDataThrows) {
     // Don't load any data
-    EXPECT_THROW(data->getNextBars()["NQ"], std::out_of_range);
+    EXPECT_THROW(data->getNextBars()[NQ_ID], std::out_of_range);
 }
 
 // ============================================================================
@@ -191,10 +195,10 @@ TEST_F(DataHandlerTest, GetNextBarOnEmptyDataThrows) {
 
 TEST_F(DataHandlerTest, GetCurrentBarAfterGetNext) {
     createTestCSV(3);
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
-    Bar next = data->getNextBars()["NQ"];        // Get first bar
-    Bar current = data->getCurrentBars()["NQ"];  // Should return same bar
+    Bar next = data->getNextBars()[NQ_ID];        // Get first bar
+    Bar current = data->getCurrentBars()[NQ_ID];  // Should return same bar
 
     // Both should be the first bar
     EXPECT_DOUBLE_EQ(next.close, current.close);
@@ -203,13 +207,13 @@ TEST_F(DataHandlerTest, GetCurrentBarAfterGetNext) {
 
 TEST_F(DataHandlerTest, GetCurrentBarDoesNotAdvanceIndex) {
     createTestCSV(3);
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
-    data->getNextBars()["NQ"];  // Advance to first bar
+    data->getNextBars()[NQ_ID];  // Advance to first bar
 
-    Bar current1 = data->getCurrentBars()["NQ"];
-    Bar current2 = data->getCurrentBars()["NQ"];
-    Bar current3 = data->getCurrentBars()["NQ"];
+    Bar current1 = data->getCurrentBars()[NQ_ID];
+    Bar current2 = data->getCurrentBars()[NQ_ID];
+    Bar current3 = data->getCurrentBars()[NQ_ID];
 
     // All should be the same (first bar)
     EXPECT_DOUBLE_EQ(current1.close, current2.close);
@@ -233,17 +237,17 @@ TEST_F(DataHandlerTest, GetCurrentBarOnEmptyDataHandlesGracefully) {
 
 TEST_F(DataHandlerTest, HasMoreDataInitiallyTrue) {
     createTestCSV(5);
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
     EXPECT_TRUE(data->hasMoreData());
 }
 
 TEST_F(DataHandlerTest, HasMoreDataFalseWhenExhausted) {
     createTestCSV(2);
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
-    data->getNextBars()["NQ"];
-    data->getNextBars()["NQ"];
+    data->getNextBars()[NQ_ID];
+    data->getNextBars()[NQ_ID];
 
     EXPECT_FALSE(data->hasMoreData());
 }
@@ -258,12 +262,12 @@ TEST_F(DataHandlerTest, HasMoreDataFalseWhenEmpty) {
 
 TEST_F(DataHandlerTest, ResetAllowsReprocessing) {
     createTestCSV(3);
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
     // Process all bars
-    data->getNextBars()["NQ"];
-    data->getNextBars()["NQ"];
-    data->getNextBars()["NQ"];
+    data->getNextBars()[NQ_ID];
+    data->getNextBars()[NQ_ID];
+    data->getNextBars()[NQ_ID];
 
     EXPECT_FALSE(data->hasMoreData());
 
@@ -276,14 +280,14 @@ TEST_F(DataHandlerTest, ResetAllowsReprocessing) {
 
 TEST_F(DataHandlerTest, ResetRestartsFromBeginning) {
     createTestCSV(3);
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
-    Bar firstBar = data->getNextBars()["NQ"];
-    data->getNextBars()["NQ"];  // Skip to second
+    Bar firstBar = data->getNextBars()[NQ_ID];
+    data->getNextBars()[NQ_ID];  // Skip to second
 
     data->reset();
 
-    Bar firstBarAgain = data->getNextBars()["NQ"];
+    Bar firstBarAgain = data->getNextBars()[NQ_ID];
 
     EXPECT_DOUBLE_EQ(firstBar.close, firstBarAgain.close);
 }
@@ -294,19 +298,19 @@ TEST_F(DataHandlerTest, ResetRestartsFromBeginning) {
 
 TEST_F(DataHandlerTest, SizeReturnsCorrectCount) {
     createTestCSV(42);
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
     EXPECT_EQ(data->size(), 42);
 }
 
 TEST_F(DataHandlerTest, SizeUnchangedByGetNextBar) {
     createTestCSV(5);
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
     size_t initialSize = data->size();
 
-    data->getNextBars()["NQ"];
-    data->getNextBars()["NQ"];
+    data->getNextBars()[NQ_ID];
+    data->getNextBars()[NQ_ID];
 
     EXPECT_EQ(data->size(), initialSize);
 }
@@ -317,13 +321,13 @@ TEST_F(DataHandlerTest, SizeUnchangedByGetNextBar) {
 
 TEST_F(DataHandlerTest, CompleteWorkflow) {
     createTestCSV(10);
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
     // Process first 5 bars
     for (int i = 0; i < 5; i++) {
         ASSERT_TRUE(data->hasMoreData());
-        Bar bar = data->getNextBars()["NQ"];
-        EXPECT_EQ(bar.symbol, "NQ");
+        Bar bar = data->getNextBars()[NQ_ID];
+        EXPECT_EQ(bar.symbol_id, NQ_ID);
     }
 
     EXPECT_TRUE(data->hasMoreData());  // 5 left
@@ -331,14 +335,14 @@ TEST_F(DataHandlerTest, CompleteWorkflow) {
     // Reset and start over
     data->reset();
 
-    Bar firstBar = data->getNextBars()["NQ"];
+    Bar firstBar = data->getNextBars()[NQ_ID];
     EXPECT_DOUBLE_EQ(firstBar.close, 3705.0);  // Back to first
 }
 
 TEST_F(DataHandlerTest, LoadMultipleFiles) {
     // Load first file
     createTestCSV(5);
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
     EXPECT_EQ(data->size(), 5);
 
     // Load second file (overwrites? or appends?)
@@ -349,7 +353,7 @@ TEST_F(DataHandlerTest, LoadMultipleFiles) {
     file << "1609459200,4000,4010,3990,4005,200000\n";
     file.close();
 
-    data->loadCSV(secondFile, "Second");
+    data->loadCSV(secondFile, SECOND_ID);
 
     // Current implementation appends - is this intended?
     EXPECT_EQ(data->size(), 6);  // 5 + 1
@@ -363,14 +367,14 @@ TEST_F(DataHandlerTest, LoadMultipleFiles) {
 
 TEST_F(DataHandlerTest, VeryLargeDataset) {
     createTestCSV(10000);
-    data->loadCSV(testFilePath, "NQ");
+    data->loadCSV(testFilePath, NQ_ID);
 
     EXPECT_EQ(data->size(), 10000);
 
     // Process all
     for (int i = 0; i < 10000; i++) {
         ASSERT_TRUE(data->hasMoreData());
-        data->getNextBars()["NQ"];
+        data->getNextBars()[NQ_ID];
     }
 
     EXPECT_FALSE(data->hasMoreData());
@@ -382,8 +386,8 @@ TEST_F(DataHandlerTest, ZeroVolumeBars) {
     file << "1609459200,3700,3710,3690,3705,0\n";  // Zero volume
     file.close();
 
-    data->loadCSV(testFilePath, "NQ");
-    Bar bar = data->getNextBars()["NQ"];
+    data->loadCSV(testFilePath, NQ_ID);
+    Bar bar = data->getNextBars()[NQ_ID];
 
     EXPECT_EQ(bar.volume, 0);
 }
