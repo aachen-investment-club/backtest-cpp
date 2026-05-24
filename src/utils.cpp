@@ -1,6 +1,7 @@
 #include "backtest-cpp/utils.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -29,6 +30,20 @@ int64_t parseDateTime(const std::string& datetime_str) {
 
     // Convert to nanoseconds
     return std::chrono::duration_cast<std::chrono::nanoseconds>(tp.time_since_epoch()).count();
+}
+
+int64_t parseNanoseconds(std::string_view timestamp_str) {
+    int64_t timestamp = 0;
+
+    auto [ptr, ec] = std::from_chars(timestamp_str.data(),
+                                     timestamp_str.data() + timestamp_str.size(), timestamp);
+
+    if (ec != std::errc()) {
+        throw std::invalid_argument("Failed to parse nanosecond timestamp: " +
+                                    std::string(timestamp_str));
+    }
+
+    return timestamp;
 }
 
 uint64_t getLineNumbers(const std::string& filepath) {

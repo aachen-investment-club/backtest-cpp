@@ -5,9 +5,6 @@ project(BacktestEngine)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Include directories
-include_directories(include)
-
 # ============================================================================
 # Build Type Configuration
 # ============================================================================
@@ -62,51 +59,50 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 # ============================================================================
+# Google Benchmark Setup
+# ============================================================================
+FetchContent_Declare(
+  googlebenchmark
+  GIT_REPOSITORY https://github.com/google/benchmark.git
+  GIT_TAG        v1.8.3
+)
+
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable benchmark testing" FORCE)
+FetchContent_MakeAvailable(googlebenchmark)
+
+# ============================================================================
+# Core Library Setup
+# ============================================================================
+# Compile all core business logic into a single static library.
+add_library(BacktestCore STATIC
+    src/data.cpp
+    src/utils.cpp
+    src/portfolio.cpp
+    strategies/SMACrossover.cpp
+    src/performance.cpp
+)
+
+# Expose the 'include' directory to any target that links against BacktestCore
+target_include_directories(BacktestCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# ============================================================================
 # Main Executable
 # ============================================================================
-
-add_executable(backtest
-    src/main.cpp
-    src/data.cpp
-    src/utils.cpp
-    src/portfolio.cpp
-    ./strategies/SMACrossover.cpp
-    src/performance.cpp
-)
+add_executable(backtest src/main.cpp)
+target_link_libraries(backtest PRIVATE BacktestCore)
 
 # ============================================================================
-# Test Executable
+# Test Executables
 # ============================================================================
 
-add_executable(data_tests
-    tests/test_data.cpp
-    src/data.cpp
-    src/utils.cpp
-)
+add_executable(data_tests tests/test_data.cpp)
+target_link_libraries(data_tests PRIVATE BacktestCore GTest::gtest_main)
 
-target_link_libraries(data_tests
-    GTest::gtest_main
-)
+add_executable(portfolio_tests tests/test_portfolio.cpp)
+target_link_libraries(portfolio_tests PRIVATE BacktestCore GTest::gtest_main)
 
-add_executable(portfolio_tests
-    tests/test_portfolio.cpp
-    src/data.cpp
-    src/portfolio.cpp
-    src/utils.cpp
-)
-
-target_link_libraries(portfolio_tests
-    GTest::gtest_main
-)
-
-add_executable(performance_tests
-    tests/test_performance.cpp
-    src/performance.cpp
-)
-
-target_link_libraries(performance_tests
-    GTest::gtest_main
-)
+add_executable(performance_tests tests/test_performance.cpp)
+target_link_libraries(performance_tests PRIVATE BacktestCore GTest::gtest_main)
 
 # Discover and register tests with CTest
 include(GoogleTest)
@@ -115,7 +111,20 @@ gtest_discover_tests(portfolio_tests)
 gtest_discover_tests(performance_tests)
 
 # ============================================================================
+# Microbenchmark Executable
+# ============================================================================
+add_executable(system_benchmarks 
+    benchmarks/bm_data.cpp
+)
+
+target_link_libraries(system_benchmarks 
+    PRIVATE 
+    BacktestCore 
+    benchmark::benchmark 
+    benchmark::benchmark_main
+)
+
+# ============================================================================
 # Optional: Generate compile_commands.json for IDE integration
 # ============================================================================
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

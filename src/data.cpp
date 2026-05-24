@@ -9,7 +9,8 @@
 
 #include "backtest-cpp/utils.h"
 
-void DataHandler::loadCSV(const std::string& filepath, uint32_t symbol_id) {
+void DataHandler::loadCSV(const std::string& filepath, uint32_t symbol_id,
+                          const std::string_view mode) {
     std::ifstream file(filepath);
 
     if (!file) {
@@ -36,7 +37,9 @@ void DataHandler::loadCSV(const std::string& filepath, uint32_t symbol_id) {
             std::map<uint32_t, Bar> symbolBarPair;
 
             bar.symbol_id = symbol_id;
-            bar.time = parseDateTime(row[0]);
+            bar.time = (mode == "nanoseconds") ? parseNanoseconds(row[0]) : parseDateTime(row[0]);
+            // if(mode == "nanoseconds") {parseNanoseconds(row[0]);}
+            // else {bar.time = parseDateTime(row[0]);}
             bar.open = std::stod(row[1]);
             bar.high = std::stod(row[2]);
             bar.low = std::stod(row[3]);
@@ -50,7 +53,8 @@ void DataHandler::loadCSV(const std::string& filepath, uint32_t symbol_id) {
     }
 
     file.close();
-    std::cout << "Loaded " << instrumentData_.size() << " bars from " << filepath << std::endl;
+    // std::cout << "Loaded " << instrumentData_.size() << " bars from " << filepath << std::endl;
+    // // DEBUG
 }
 
 void DataHandler::loadAllCSVs(const std::string& directory) {
