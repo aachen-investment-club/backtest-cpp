@@ -1,4 +1,4 @@
-#include "smacrossover.h"
+#include "backtest-cpp/strategies/smacrossover.h"
 
 #include <cmath>
 #include <iostream>

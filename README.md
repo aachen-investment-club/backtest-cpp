@@ -8,26 +8,31 @@ A high-performance, event-driven backtesting system for quantitative trading str
 You may use llms for explanations and hints but try to really understand these concepts and type out the code yourself.
   
 ## Build
+You can build using either the `dev` (Debug, no LTO) or `release` (Optimized, LTO enabled) preset.
+
 ```bash
-mkdir build && cd build
-cmake ..
-make
+cmake --preset release
+cmake --build --preset release
 ```
 
 ## Run
+**Note:** As of now, and possibly subject to change, the executable relies on relative paths for data loading and must therefore be run from the **project root directory**.
+
 ```bash
-./backtest
+./build/release/src/backtest
 ```
 
 ## Test
 ```bash
-ctest
-(CI includes running ctest and ./backtest)
+ctest --preset release
+# (CI includes running ctest and the backtest binary)
 ```
 
 ## Benchmark
+Benchmarks are built automatically alongside the project. Always run benchmarks using the `release` preset to ensure the compiler optimizations are active.
+
 ```bash
-./system_benchmarks
+./build/release/benchmarks/system_benchmarks
 ```
 
 ## Format

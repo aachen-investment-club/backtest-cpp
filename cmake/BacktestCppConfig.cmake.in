@@ -1,0 +1,11 @@
+@PACKAGE_INIT@
+
+if(CMAKE_VERSION VERSION_LESS "3.23.0")
+    set(BacktestCpp_FOUND FALSE)
+    set(BacktestCpp_NOT_FOUND_MESSAGE "BacktestCpp requires CMake 3.23.0 or newer to consume target FILE_SETs.")
+    return()
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/BacktestCppTargets.cmake")
+
+check_required_components(BacktestCpp)
