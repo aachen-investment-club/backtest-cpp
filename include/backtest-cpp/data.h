@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <map>
+#include <string_view>
 #include <vector>
 
 #include "backtest-cpp/symbol_dictionary.h"
@@ -12,7 +13,8 @@ class DataHandler {
     DataHandler() = default;
     DataHandler(symbol_dictionary& symDict) : symDict(symDict) {}
 
-    void loadCSV(const std::string& filepath, uint32_t symbol_id);
+    void loadCSV(const std::string& filepath, uint32_t symbol_id,
+                 const std::string_view mode = "string");
     void loadAllCSVs(const std::string& directory);
     std::map<uint32_t, Bar> getNextBars();
     std::map<uint32_t, Bar> getCurrentBars() const;

@@ -25,6 +25,11 @@ ctest
 (CI includes running ctest and ./backtest)
 ```
 
+## Benchmark
+```bash
+./system_benchmarks
+```
+
 ## Format
 ```bash
 find . -name "*.cpp" -o -name "*.h" | xargs clang-format -i
