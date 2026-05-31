@@ -8,14 +8,14 @@
 
 Portfolio::Portfolio(const PortfolioConfig& config)
     : availableCash_(config.initialCash),
-      commission_(config.commission),
-      leverage_(config.leverage) {}
+      leverage_(config.leverage),
+      commission_(config.commission) {}
 
 std::map<std::uint32_t, Position>& Portfolio::getCurrentPositions() {
     return positions_;
 };
 
-const double Portfolio::getInvestedValue(const std::map<std::uint32_t, Bar>& currentBars) const {
+double Portfolio::getInvestedValue(const std::map<std::uint32_t, Bar>& currentBars) const {
     double totalPositionValue = 0;
     for (const auto& [symbol_id, position] : positions_) {
         // std::cout << "CurrentBars.size() " << currentBars.size() << std::endl;
@@ -30,7 +30,7 @@ const double Portfolio::getInvestedValue(const std::map<std::uint32_t, Bar>& cur
     return fabs(totalPositionValue);
 }
 
-const double Portfolio::getTotalEquity(const std::map<std::uint32_t, Bar>& currentBars) const {
+double Portfolio::getTotalEquity(const std::map<std::uint32_t, Bar>& currentBars) const {
     return getInvestedValue(currentBars) + availableCash_;
 };
 
@@ -138,10 +138,10 @@ void Portfolio::executeOrder(const Order& order, const bool close = false) {
         Position& pos = positions_[order.symbol_id];
 
         // Add to position
-        if (order.direction == SignalType::BUY && pos.direction == SignalType::BUY ||
-            order.direction == SignalType::SELL && pos.direction == SignalType::SELL) {
+        if ((order.direction == SignalType::BUY && pos.direction == SignalType::BUY) ||
+            (order.direction == SignalType::SELL && pos.direction == SignalType::SELL)) {
             pos.averagePrice = (pos.quantity * pos.averagePrice + order.quantity * order.price) /
-                               (double)(pos.quantity + order.quantity);
+                               static_cast<double>(pos.quantity + order.quantity);
             availableCash_ -= (order.quantity * order.price + commission_);
 
             // Remove from position

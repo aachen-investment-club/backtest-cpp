@@ -18,8 +18,8 @@ class Portfolio {
     Portfolio(const PortfolioConfig& config);
 
     std::map<std::uint32_t, Position>& getCurrentPositions();
-    const double getInvestedValue(const std::map<std::uint32_t, Bar>& currentBars) const;
-    const double getTotalEquity(const std::map<std::uint32_t, Bar>& currentBar) const;
+    double getInvestedValue(const std::map<std::uint32_t, Bar>& currentBars) const;
+    double getTotalEquity(const std::map<std::uint32_t, Bar>& currentBar) const;
     double getRealizedPnL() const;
     double getUnrealizedPnL(const std::map<std::uint32_t, Bar>& currentBars) const;
     bool checkOverdraft(const Order& order) const;

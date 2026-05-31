@@ -4,7 +4,7 @@
 
 class SMACrossover : public Strategy {
    public:
-    SMACrossover(uint32_t symbold_id, int shortPeriod = 10, int longPeriod = 30);
+    SMACrossover(uint32_t sym_id, int shortPeriod = 10, int longPeriod = 30);
 
     void onInit(const std::vector<std::map<uint32_t, Bar>>& availableData) override;
 

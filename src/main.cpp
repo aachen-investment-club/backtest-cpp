@@ -3,10 +3,10 @@
 #include <optional>
 #include <vector>
 
-#include "../strategies/smacrossover.h"
 #include "backtest-cpp/data.h"
 #include "backtest-cpp/performance.h"
 #include "backtest-cpp/portfolio.h"
+#include "backtest-cpp/strategies/smacrossover.h"
 #include "backtest-cpp/symbol_dictionary.h"
 
 std::map<std::string, uint32_t> symbolToId = {{"NQ", 0}, {"ES", 1}};
@@ -24,9 +24,9 @@ int main() {
 
     SMACrossover strategy(nq_id, 10, 30);
 
-    // dataHandler.loadCSV("../data/Mini.csv", "nq_id");
-    dataHandler.loadCSV("../data/NQ_sample.csv", nq_id);
-    // dataHandler.loadAllCSVs("../data");
+    // dataHandler.loadCSV("./data/Mini.csv", "nq_id");
+    dataHandler.loadCSV("./data/NQ_sample.csv", nq_id);
+    // dataHandler.loadAllCSVs("./data");
 
     // -------------------------------------------------
     // Strategy warm-up (SMA lookback)

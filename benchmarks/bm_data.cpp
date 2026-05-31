@@ -9,7 +9,7 @@
 #include "backtest-cpp/types.h"
 #include "backtest-cpp/utils.h"
 
-static void CreateDummyCSV(const std::string& filepath, int numRows) {
+static void CreateDummyCSV(const std::string& filepath, int64_t numRows) {
     std::ofstream file(filepath);
     file << "timestamp,open,high,low,close,volume\n";
 
@@ -18,8 +18,8 @@ static void CreateDummyCSV(const std::string& filepath, int numRows) {
 
     const int64_t hour_in_ns = 3600000000000LL;
 
-    for (int i = 0; i < numRows; i++) {
-        double basePrice = 3700.0 + (i % 100);
+    for (int64_t i = 0; i < numRows; i++) {
+        double basePrice = 3700.0 + static_cast<double>(i % 100);
 
         // Write the 64-bit nanosecond integer to the file
         file << (base_timestamp_ns + i * hour_in_ns) << "," << basePrice << ","
@@ -30,7 +30,7 @@ static void CreateDummyCSV(const std::string& filepath, int numRows) {
 
 // Benchmark the CSV loading process
 static void BM_DataHandler_LoadCSV(benchmark::State& state) {
-    const int numRows = state.range(0);
+    const int64_t numRows = state.range(0);
     const std::string filepath = "bm_temp_load_" + std::to_string(numRows) + ".csv";
 
     CreateDummyCSV(filepath, numRows);
@@ -55,7 +55,7 @@ static void BM_DataHandler_LoadCSV(benchmark::State& state) {
 
 // Benchmark retrieving bars sequentially
 static void BM_DataHandler_GetNextBars(benchmark::State& state) {
-    const int numRows = state.range(0);
+    const int64_t numRows = state.range(0);
     const std::string filepath = "bm_temp_get_" + std::to_string(numRows) + ".csv";
     CreateDummyCSV(filepath, numRows);
 

@@ -40,11 +40,11 @@ double Performance::annualizedVolatility(const std::vector<EquityPoint>& curve, 
 
     double mean = 0.0;
     for (double r : returns) mean += r;
-    mean /= returns.size();
+    mean /= static_cast<double>(returns.size());
 
     double var = 0.0;
     for (double r : returns) var += (r - mean) * (r - mean);
-    var /= (returns.size() - 1);
+    var /= static_cast<double>(returns.size() - 1);
 
     double annualPeriods = getAnnualization(freq).periodsPerYear;
     return std::sqrt(var * annualPeriods);

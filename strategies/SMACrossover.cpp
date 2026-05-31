@@ -1,4 +1,4 @@
-#include "smacrossover.h"
+#include "backtest-cpp/strategies/smacrossover.h"
 
 #include <cmath>
 #include <iostream>
@@ -9,8 +9,8 @@
 
 #include "backtest-cpp/types.h"
 
-SMACrossover::SMACrossover(uint32_t symbol_id, int shortPeriod, int longPeriod)
-    : symbol_id(symbol_id), shortPeriod_(shortPeriod), longPeriod_(longPeriod) {
+SMACrossover::SMACrossover(uint32_t sym_id, int shortPeriod, int longPeriod)
+    : symbol_id(sym_id), shortPeriod_(shortPeriod), longPeriod_(longPeriod) {
     if (shortPeriod >= longPeriod) {
         throw std::invalid_argument("Short period must be < long period");
     }
@@ -27,13 +27,13 @@ void SMACrossover::onInit(const std::vector<std::map<uint32_t, Bar>>& availableD
     double shortSum = 0.0;
     double longSum = 0.0;
 
-    for (size_t i = n - longPeriod_; i < n; i++) {
+    for (size_t i = n - static_cast<size_t>(longPeriod_); i < n; i++) {
         double closePrice = availableData[i].at(symbol_id).close;
 
         longWindow_.push_back(closePrice);
         longSum += closePrice;
 
-        if (i >= n - shortPeriod_) {
+        if (i >= n - static_cast<size_t>(shortPeriod_)) {
             shortWindow_.push_back(closePrice);
             shortSum += closePrice;
         }
@@ -47,8 +47,8 @@ void SMACrossover::onInit(const std::vector<std::map<uint32_t, Bar>>& availableD
     initialized_ = true;
 }
 
-std::map<uint32_t, std::optional<Signal>> SMACrossover::onBars(
-    std::map<uint32_t, Bar>& bars, std::map<uint32_t, Position>& positions) {
+std::map<uint32_t, std::optional<Signal>> SMACrossover::onBars(std::map<uint32_t, Bar>& bars,
+                                                               std::map<uint32_t, Position>&) {
     if (!initialized_) {
         return {};  // Not ready yet
     }
@@ -124,15 +124,16 @@ std::map<uint32_t, Order> SMACrossover::generateOrders(const std::map<uint32_t, 
                                                        std::map<uint32_t, Position>& positions) {
     std::map<uint32_t, Order> orderMap;
 
-    for (const auto& [symbol_id, signal] : signals) {
+    for (const auto& [sig_symbol_id, signal] : signals) {
         // Get current position (can be positive, negative, or zero)
         int current_positionSize = 0;
-        if (auto it = positions.find(symbol_id); it != positions.end()) {
+        if (auto it = positions.find(sig_symbol_id); it != positions.end()) {
             current_positionSize = it->second.quantity;
         }
 
         // Calculate target position size
-        int target_size = static_cast<int>(std::floor(maxInvest / currentBars.at(symbol_id).open));
+        int target_size =
+            static_cast<int>(std::floor(maxInvest / currentBars.at(sig_symbol_id).open));
 
         int quantity = 0;
 
@@ -145,9 +146,9 @@ std::map<uint32_t, Order> SMACrossover::generateOrders(const std::map<uint32_t, 
             quantity = -target_size - current_positionSize;
         }
 
-        orderMap[symbol_id] =
-            Order{signal.time,       signal.symbol_id, signal.type, currentBars.at(symbol_id).close,
-                  OrderType::MARKET, quantity};
+        orderMap[sig_symbol_id] = Order{signal.time,       signal.symbol_id,
+                                        signal.type,       currentBars.at(sig_symbol_id).close,
+                                        OrderType::MARKET, quantity};
     }
 
     return orderMap;

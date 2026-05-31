@@ -1,130 +1,88 @@
-cmake_minimum_required(VERSION 3.15)
-project(BacktestEngine)
+cmake_minimum_required(VERSION 3.26...3.31)
 
-# Use C++20
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+project(BacktestCpp
+    VERSION 0.1.0
+    DESCRIPTION "A high-performance C++ Backtesting Engine"
+    HOMEPAGE_URL "https://github.com/aachen-investment-club/backtest-cpp"
+    LANGUAGES CXX
+)
 
-# ============================================================================
-# Build Type Configuration
-# ============================================================================
-# Set default build type if not specified
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release CACHE STRING 
-        "Choose: Debug or Release" FORCE)
+include(GNUInstallDirs)
+
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN YES)
+
+option(BACKTESTCPP_ENABLE_WERROR "Treat warnings as errors" OFF)
+option(BACKTESTCPP_ENABLE_LTO "Enable Interprocedural Optimization (LTO)" ${PROJECT_IS_TOP_LEVEL})
+option(BACKTESTCPP_BUILD_BENCHMARKS "Enable and build benchmarks" ${PROJECT_IS_TOP_LEVEL})
+
+set(CMAKE_COMPILE_WARNING_AS_ERROR ${BACKTESTCPP_ENABLE_WERROR})
+
+if(BACKTESTCPP_ENABLE_LTO)
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT ipo_supported OUTPUT ipo_error)
+    if(NOT ipo_supported)
+        message(WARNING "IPO/LTO is not supported: ${ipo_error}")
+        set(BACKTESTCPP_ENABLE_LTO OFF)
+    endif()
 endif()
 
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+add_library(backtest_warnings INTERFACE)
+add_library(BacktestCpp::Warnings ALIAS backtest_warnings)
 
-# Configure compiler flags for GCC/Clang
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    # Debug: For GDB debugging
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
+target_compile_options(backtest_warnings INTERFACE
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,GNU>:
+        -Wall;-Wextra;-Wshadow;-Wnon-virtual-dtor;-Wold-style-cast;-Wcast-align;-Wunused;-Woverloaded-virtual;-Wpedantic;-Wconversion;-Wsign-conversion>
+    $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:
+        /W4;/w14242;/w14254;/w14263;/w14265;/w14287;/w14296;/w14311;/w14545;/w14546;/w14547;/w14549;/w14555;/w14619;/w14640;/w14826;/w14905;/w14906;/w14928>
+)
+
+add_subdirectory(src)
+add_subdirectory(strategies)
+
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/data/"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}")
+
+include(CTest)
+if(BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
+    add_subdirectory(tests)
+endif()
+
+if(BACKTESTCPP_BUILD_BENCHMARKS AND PROJECT_IS_TOP_LEVEL)
+    add_subdirectory(benchmarks)
+endif()
+
+if(PROJECT_IS_TOP_LEVEL)
+    include(CMakePackageConfigHelpers)
     
-    # Release: For fast execution with hardware-specific optimizations
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native")
-    
-    # Optional: Release with debug info (fast but still debuggable)
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DNDEBUG -march=native")
+    write_basic_package_version_file(
+        "${PROJECT_BINARY_DIR}/BacktestCppConfigVersion.cmake"
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY SameMajorVersion
+    )
+
+    configure_package_config_file(
+        "${PROJECT_SOURCE_DIR}/cmake/BacktestCppConfig.cmake.in"
+        "${PROJECT_BINARY_DIR}/BacktestCppConfig.cmake"
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/BacktestCpp"
+    )
+
+    install(EXPORT BacktestCppTargets
+        FILE BacktestCppTargets.cmake
+        NAMESPACE BacktestCpp::
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/BacktestCpp"
+    )
+
+    install(FILES
+        "${PROJECT_BINARY_DIR}/BacktestCppConfig.cmake"
+        "${PROJECT_BINARY_DIR}/BacktestCppConfigVersion.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/BacktestCpp"
+    )
+
+    set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+    set(CPACK_PACKAGE_VENDOR "Aachen Investment Club")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_DESCRIPTION}")
+    set(CPACK_SOURCE_GENERATOR "TGZ;ZIP")
+    set(CPACK_GENERATOR "TGZ;ZIP")
+    include(CPack)
 endif()
-
-# Enable LTO (Link Time Optimization) / IPO if supported
-include(CheckIPOSupported)
-check_ipo_supported(RESULT ipo_supported OUTPUT error)
-if(ipo_supported)
-    message(STATUS "LTO/IPO is supported and enabled.")
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-else()
-    message(WARNING "LTO/IPO is not supported: ${error}")
-endif()
-
-# ============================================================================
-# Google Test Setup
-# ============================================================================
-
-# Fetch Google Test from GitHub
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/release-1.12.1.zip
-)
-
-# For Windows: Prevent overriding parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-# Make Google Test available
-FetchContent_MakeAvailable(googletest)
-
-# Enable testing
-enable_testing()
-
-# ============================================================================
-# Google Benchmark Setup
-# ============================================================================
-FetchContent_Declare(
-  googlebenchmark
-  GIT_REPOSITORY https://github.com/google/benchmark.git
-  GIT_TAG        v1.8.3
-)
-
-set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable benchmark testing" FORCE)
-FetchContent_MakeAvailable(googlebenchmark)
-
-# ============================================================================
-# Core Library Setup
-# ============================================================================
-# Compile all core business logic into a single static library.
-add_library(BacktestCore STATIC
-    src/data.cpp
-    src/utils.cpp
-    src/portfolio.cpp
-    strategies/SMACrossover.cpp
-    src/performance.cpp
-)
-
-# Expose the 'include' directory to any target that links against BacktestCore
-target_include_directories(BacktestCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-# ============================================================================
-# Main Executable
-# ============================================================================
-add_executable(backtest src/main.cpp)
-target_link_libraries(backtest PRIVATE BacktestCore)
-
-# ============================================================================
-# Test Executables
-# ============================================================================
-
-add_executable(data_tests tests/test_data.cpp)
-target_link_libraries(data_tests PRIVATE BacktestCore GTest::gtest_main)
-
-add_executable(portfolio_tests tests/test_portfolio.cpp)
-target_link_libraries(portfolio_tests PRIVATE BacktestCore GTest::gtest_main)
-
-add_executable(performance_tests tests/test_performance.cpp)
-target_link_libraries(performance_tests PRIVATE BacktestCore GTest::gtest_main)
-
-# Discover and register tests with CTest
-include(GoogleTest)
-gtest_discover_tests(data_tests)
-gtest_discover_tests(portfolio_tests)
-gtest_discover_tests(performance_tests)
-
-# ============================================================================
-# Microbenchmark Executable
-# ============================================================================
-add_executable(system_benchmarks 
-    benchmarks/bm_data.cpp
-)
-
-target_link_libraries(system_benchmarks 
-    PRIVATE 
-    BacktestCore 
-    benchmark::benchmark 
-    benchmark::benchmark_main
-)
-
-# ============================================================================
-# Optional: Generate compile_commands.json for IDE integration
-# ============================================================================
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
