@@ -19,7 +19,6 @@ void DataHandler::loadCSV(const std::string& filepath, uint32_t symbol_id,
     }
 
     std::string line;
-    int numLine = 0;
     std::getline(file, line);
     instrumentData_.reserve(instrumentData_.size() + getLineNumbers(filepath));
 
