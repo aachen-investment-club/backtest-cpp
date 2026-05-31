@@ -9,8 +9,8 @@
 
 #include "backtest-cpp/types.h"
 
-SMACrossover::SMACrossover(uint32_t symbol_id, int shortPeriod, int longPeriod)
-    : symbol_id(symbol_id), shortPeriod_(shortPeriod), longPeriod_(longPeriod) {
+SMACrossover::SMACrossover(uint32_t sym_id, int shortPeriod, int longPeriod)
+    : symbol_id(sym_id), shortPeriod_(shortPeriod), longPeriod_(longPeriod) {
     if (shortPeriod >= longPeriod) {
         throw std::invalid_argument("Short period must be < long period");
     }
