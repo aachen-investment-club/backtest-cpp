@@ -69,7 +69,7 @@ void DataHandler::loadAllCSVs(const std::string& directory) {
     std::cout << "Loaded " << counter << " csv files";
 }
 
-void DataHandler::synchronize(std::vector<std::map<uint32_t, Bar>>& rawData) {
+void DataHandler::synchronize(std::vector<std::map<uint32_t, Bar>>&) {
     // Collects all unique timestamps from all loaded instruments
     // Sorts them chronologically
     // For each timestamp:
