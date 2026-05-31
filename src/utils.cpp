@@ -53,8 +53,8 @@ uint64_t getLineNumbers(const std::string& filepath) {
     }
 
     // Count newline characters
-    uint64_t lineCount =
-        std::count(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>(), '\n');
+    uint64_t lineCount = static_cast<uint64_t>(
+        std::count(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>(), '\n'));
 
     // Check if last line doesn't end with newline
     file.clear();
