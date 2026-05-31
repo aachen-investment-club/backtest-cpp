@@ -19,7 +19,7 @@ static void CreateDummyCSV(const std::string& filepath, int64_t numRows) {
     const int64_t hour_in_ns = 3600000000000LL;
 
     for (int64_t i = 0; i < numRows; i++) {
-        double basePrice = 3700.0 + (i % 100);
+        double basePrice = 3700.0 + static_cast<double>(i % 100);
 
         // Write the 64-bit nanosecond integer to the file
         file << (base_timestamp_ns + i * hour_in_ns) << "," << basePrice << ","
