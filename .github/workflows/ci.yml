@@ -29,22 +29,13 @@ jobs:
         sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
     
     - name: Configure CMake
-      run: |
-        mkdir build
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=Release ..
+      run: cmake --preset release
     
     - name: Build
-      run: |
-        cd build
-        make -j$(nproc)
+      run: cmake --build --preset release -j $(nproc)
     
     - name: Run Unit Tests
-      run: |
-        cd build
-        ctest --output-on-failure --verbose
+      run: ctest --preset release --output-on-failure --verbose
     
     - name: Run Backtest (Integration Test)
-      run: |
-        cd build
-        timeout 60s ./backtest
+      run: timeout 60s ./build/release/src/backtest
