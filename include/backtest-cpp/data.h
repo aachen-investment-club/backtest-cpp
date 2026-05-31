@@ -10,7 +10,6 @@
 
 class DataHandler {
    public:
-    DataHandler() = default;
     DataHandler(symbol_dictionary& symDict) : symDict(symDict) {}
 
     void loadCSV(const std::string& filepath, uint32_t symbol_id,
