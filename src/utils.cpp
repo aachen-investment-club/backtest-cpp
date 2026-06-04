@@ -7,6 +7,10 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <charconv>
+#include <system_error>
+#include <iomanip>
+#include <ctime>  
 
 std::string extractSymbolFromPath(const std::string& path) {
     return std::filesystem::path(path).stem().string();
