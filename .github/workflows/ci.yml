@@ -52,7 +52,7 @@ jobs:
     - name: Run Backtest (Integration Test - macOS) 
       if: runner.os == 'macOS'
       timeout-minutes: 1
-      run: timeout 60s ./build/release/src/backtest
+      run: ./build/release/src/backtest
 
     - name: Run Backtest (Integration Test - Windows)
       if: runner.os == 'Windows'
