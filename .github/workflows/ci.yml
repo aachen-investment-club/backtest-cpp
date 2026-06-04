@@ -45,10 +45,16 @@ jobs:
     - name: Run Unit Tests
       run: ctest --preset release --output-on-failure --verbose
     
-    - name: Run Backtest (Integration Test - UNIX)
+    - name: Run Backtest (Integration Test - Linux)
       if: runner.os == 'Linux'
       run: timeout 60s ./build/release/src/backtest
 
+    - name: Run Backtest (Integration Test - macOS) 
+      if: runner.os == 'macOS'
+      timeout-minutes: 1
+      run: timeout 60s ./build/release/src/backtest
+
     - name: Run Backtest (Integration Test - Windows)
-      if: runner.os != 'Linux'
+      if: runner.os == 'Windows'
+      timeout-minutes: 1
       run: .\build\release\src\Release\backtest.exe
