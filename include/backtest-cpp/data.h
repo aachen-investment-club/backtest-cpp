@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstring>
+#include <string>
+#include <cstdint>
 #include <map>
 #include <string_view>
 #include <vector>
