@@ -46,9 +46,9 @@ jobs:
       run: ctest --preset release --output-on-failure --verbose
     
     - name: Run Backtest (Integration Test - UNIX)
-      if: runner.os != 'Windows'
+      if: runner.os == 'Linux'
       run: timeout 60s ./build/release/src/backtest
 
     - name: Run Backtest (Integration Test - Windows)
-      if: runner.os == 'Windows'
+      if: runner.os != 'Linux'
       run: .\build\release\src\Release\backtest.exe
