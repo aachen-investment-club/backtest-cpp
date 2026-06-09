@@ -1,9 +1,11 @@
+#include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <optional>
 #include <vector>
-#include <chrono>
+#if defined(__linux__)
 #include <sys/resource.h>
+#endif
 
 #include "backtest-cpp/data.h"
 #include "backtest-cpp/performance.h"
@@ -72,30 +74,31 @@ int main() {
             if (signal.has_value()) {
                 Order order = strategy.generateOrder(signal.value(), bars[symbol], 10'000,
                                                      portfolio.getCurrentPositions());
-                if(DEBUG) {
+                if (DEBUG) {
                     std::cout << "Order at bar " << barCount << ": "
-                            << (signal->type == SignalType::BUY ? "BUY " : "SELL ") << order.quantity
-                            << " @ " << bars[symbol].close << std::endl;
+                              << (signal->type == SignalType::BUY ? "BUY " : "SELL ")
+                              << order.quantity << " @ " << bars[symbol].close << std::endl;
 
                     std::cout << "INFO | Unrealized PnL : " << portfolio.getUnrealizedPnL(bars)
-                            << " | Realized PnL : " << portfolio.getRealizedPnL() << std::endl;
+                              << " | Realized PnL : " << portfolio.getRealizedPnL() << std::endl;
 
                     std::cout << "INFO | Total Equity Before: " << portfolio.getTotalEquity(bars)
-                            << std::endl;
+                              << std::endl;
                 }
 
                 portfolio.executeOrder(order, true);
 
-                if(DEBUG) {
+                if (DEBUG) {
                     std::cout << "INFO | Total Equity After: " << std::setprecision(7)
-                            << portfolio.getTotalEquity(bars) << std::endl;
+                              << portfolio.getTotalEquity(bars) << std::endl;
 
                     std::cout << "DEBUG: equity: " << portfolio.getTotalEquity(bars) << std::endl;
 
                     auto it = portfolio.getCurrentPositions().find(nq_id);
                     std::cout << "INFO | Total Positions After: "
-                            << (it != portfolio.getCurrentPositions().end() ? it->second.quantity : 0)
-                            << std::endl;
+                              << (it != portfolio.getCurrentPositions().end() ? it->second.quantity
+                                                                              : 0)
+                              << std::endl;
 
                     std::cout << "----------------------------------------------" << std::endl;
                 }
@@ -127,7 +130,6 @@ int main() {
     std::cout << "Realized PnL   : " << portfolio.getRealizedPnL() << std::endl;
     std::cout << "Final Equity   : " << portfolio.getTotalEquity(finalBars) << std::endl;
 
-
     std::cout << "\n=== Strategy Performance Statistics ===" << std::endl;
 
     double annReturn = Performance::annualizedReturn(equityCurve, Frequency::MINUTE);
@@ -141,26 +143,26 @@ int main() {
     std::cout << "Annualized Vol    : " << annVol * 100 << " %" << std::endl;
     std::cout << "Sharpe Ratio      : " << sharpe << std::endl;
 
-
     std::cout << "\n=== System Performance Statistics ===" << std::endl;
 
     auto end = std::chrono::steady_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
 
-    double throughput = static_cast<double>(dataHandler.size()) / elapsed_seconds.count() / 1'000'000.0;
+    double throughput =
+        static_cast<double>(dataHandler.size()) / elapsed_seconds.count() / 1'000'000.0;
     std::cout << "Elapsed Time: : " << elapsed_seconds.count() * 1000 << " ms\n";
     std::cout << "Throughput: " << throughput << "M Events/sec\n";
 
-    #if defined(__linux__)
-        struct rusage usage;
-        
-        if (getrusage(RUSAGE_SELF, &usage) == 0) {
-            double max_rss_mb = static_cast<double>(usage.ru_maxrss) / 1024.0;
-            std::cout << "Max Resident Size: " << max_rss_mb << "MB\n";
-        } else {
-            std::cerr << "Failed to get memory usage.\n";
-        }
-    #endif
+#if defined(__linux__)
+    struct rusage usage;
+
+    if (getrusage(RUSAGE_SELF, &usage) == 0) {
+        double max_rss_mb = static_cast<double>(usage.ru_maxrss) / 1024.0;
+        std::cout << "Max Resident Size: " << max_rss_mb << "MB\n";
+    } else {
+        std::cerr << "Failed to get memory usage.\n";
+    }
+#endif
 
     return 0;
 }
