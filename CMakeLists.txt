@@ -39,6 +39,7 @@ target_compile_options(backtest_warnings INTERFACE
 
 add_subdirectory(src)
 add_subdirectory(strategies)
+add_subdirectory(performance)
 
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/data/"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}")
