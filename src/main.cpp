@@ -1,7 +1,11 @@
+#include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <optional>
 #include <vector>
+#if defined(__linux__)
+#include <sys/resource.h>
+#endif
 
 #include "backtest-cpp/data.h"
 #include "backtest-cpp/performance.h"
@@ -9,10 +13,14 @@
 #include "backtest-cpp/strategies/smacrossover.h"
 #include "backtest-cpp/symbol_dictionary.h"
 
+#define DEBUG false
+
 std::map<std::string, uint32_t> symbolToId = {{"NQ", 0}, {"ES", 1}};
 uint32_t nq_id = symbolToId["NQ"];
 
 int main() {
+    auto start = std::chrono::steady_clock::now();
+
     std::cout << "=== Backtesting Engine ===" << std::endl;
 
     // -------------------------------------------------
@@ -24,9 +32,8 @@ int main() {
 
     SMACrossover strategy(nq_id, 10, 30);
 
-    // dataHandler.loadCSV("./data/Mini.csv", "nq_id");
     dataHandler.loadCSV("./data/NQ_sample.csv", nq_id);
-    // dataHandler.loadAllCSVs("./data");
+    // dataHandler.loadAllCSVs("./data"); // TODO
 
     // -------------------------------------------------
     // Strategy warm-up (SMA lookback)
@@ -34,7 +41,6 @@ int main() {
     std::vector<std::map<uint32_t, Bar>> historicalData;
 
     for (int i = 0; i < 30 && dataHandler.hasMoreData(); ++i) {
-        std::cout << "Added Bar" << std::endl;
         historicalData.push_back(dataHandler.getNextBars());
     }
     strategy.onInit(historicalData);
@@ -68,30 +74,34 @@ int main() {
             if (signal.has_value()) {
                 Order order = strategy.generateOrder(signal.value(), bars[symbol], 10'000,
                                                      portfolio.getCurrentPositions());
+                if (DEBUG) {
+                    std::cout << "Order at bar " << barCount << ": "
+                              << (signal->type == SignalType::BUY ? "BUY " : "SELL ")
+                              << order.quantity << " @ " << bars[symbol].close << std::endl;
 
-                std::cout << "Order at bar " << barCount << ": "
-                          << (signal->type == SignalType::BUY ? "BUY " : "SELL ") << order.quantity
-                          << " @ " << bars[symbol].close << std::endl;
+                    std::cout << "INFO | Unrealized PnL : " << portfolio.getUnrealizedPnL(bars)
+                              << " | Realized PnL : " << portfolio.getRealizedPnL() << std::endl;
 
-                std::cout << "INFO | Unrealized PnL : " << portfolio.getUnrealizedPnL(bars)
-                          << " | Realized PnL : " << portfolio.getRealizedPnL() << std::endl;
-
-                std::cout << "INFO | Total Equity Before: " << portfolio.getTotalEquity(bars)
-                          << std::endl;
+                    std::cout << "INFO | Total Equity Before: " << portfolio.getTotalEquity(bars)
+                              << std::endl;
+                }
 
                 portfolio.executeOrder(order, true);
 
-                std::cout << "INFO | Total Equity After: " << std::setprecision(7)
-                          << portfolio.getTotalEquity(bars) << std::endl;
+                if (DEBUG) {
+                    std::cout << "INFO | Total Equity After: " << std::setprecision(7)
+                              << portfolio.getTotalEquity(bars) << std::endl;
 
-                std::cout << "DEBUG: equity: " << portfolio.getTotalEquity(bars) << std::endl;
+                    std::cout << "DEBUG: equity: " << portfolio.getTotalEquity(bars) << std::endl;
 
-                auto it = portfolio.getCurrentPositions().find(nq_id);
-                std::cout << "INFO | Total Positions After: "
-                          << (it != portfolio.getCurrentPositions().end() ? it->second.quantity : 0)
-                          << std::endl;
+                    auto it = portfolio.getCurrentPositions().find(nq_id);
+                    std::cout << "INFO | Total Positions After: "
+                              << (it != portfolio.getCurrentPositions().end() ? it->second.quantity
+                                                                              : 0)
+                              << std::endl;
 
-                std::cout << "----------------------------------------------" << std::endl;
+                    std::cout << "----------------------------------------------" << std::endl;
+                }
             }
         }
         // std::cout << "DEBUG: Logged time: " << bars.begin()->second.time << std::endl;
@@ -102,7 +112,7 @@ int main() {
 
         ++barCount;
     }
-    std::cout << "Finished loop" << std::endl;
+
     // -------------------------------------------------
     // Final liquidation
     // -------------------------------------------------
@@ -112,7 +122,6 @@ int main() {
     equityCurve.push_back({finalBars.begin()->second.time, portfolio.getTotalEquity(finalBars)});
 
     // -------------------------------------------------
-
     // Backtest summary
     // -------------------------------------------------
     std::cout << "\n=== Backtest Complete ===" << std::endl;
@@ -121,10 +130,7 @@ int main() {
     std::cout << "Realized PnL   : " << portfolio.getRealizedPnL() << std::endl;
     std::cout << "Final Equity   : " << portfolio.getTotalEquity(finalBars) << std::endl;
 
-    // -------------------------------------------------
-    // Performance statistics
-    // -------------------------------------------------
-    std::cout << "\n=== Performance Statistics ===" << std::endl;
+    std::cout << "\n=== Strategy Performance Statistics ===" << std::endl;
 
     double annReturn = Performance::annualizedReturn(equityCurve, Frequency::MINUTE);
 
@@ -136,6 +142,27 @@ int main() {
     std::cout << "Annualized Return : " << annReturn * 100 << " %" << std::endl;
     std::cout << "Annualized Vol    : " << annVol * 100 << " %" << std::endl;
     std::cout << "Sharpe Ratio      : " << sharpe << std::endl;
+
+    std::cout << "\n=== System Performance Statistics ===" << std::endl;
+
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+
+    double throughput =
+        static_cast<double>(dataHandler.size()) / elapsed_seconds.count() / 1'000'000.0;
+    std::cout << "Elapsed Time: : " << elapsed_seconds.count() * 1000 << " ms\n";
+    std::cout << "Throughput: " << throughput << "M Events/sec\n";
+
+#if defined(__linux__)
+    struct rusage usage;
+
+    if (getrusage(RUSAGE_SELF, &usage) == 0) {
+        double max_rss_mb = static_cast<double>(usage.ru_maxrss) / 1024.0;
+        std::cout << "Max Resident Size: " << max_rss_mb << "MB\n";
+    } else {
+        std::cerr << "Failed to get memory usage.\n";
+    }
+#endif
 
     return 0;
 }

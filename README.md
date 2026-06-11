@@ -35,10 +35,22 @@ Benchmarks are built automatically alongside the project. Always run benchmarks 
 ./build/release/benchmarks/system_benchmarks
 ```
 
+## Performance
+Run and profile the code via the analysis tool (currently linux only):
+```bash
+./build/release/performance/analyze
+```  
+
+The results and comparisons are written to the performance table in:
+```bash
+performance/PERFORMANCE.md
+```
+
 ## Format
 ```bash
 find . -name "*.cpp" -o -name "*.h" | xargs clang-format -i
 ```
+
 
 ## ToDos / Quant Developer Roadmap
 
