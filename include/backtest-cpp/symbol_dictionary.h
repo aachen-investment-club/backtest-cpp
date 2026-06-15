@@ -7,6 +7,7 @@ class symbol_dictionary {
    public:
     uint32_t get_id(const std::string& symbol);
     std::string get_symbol(uint32_t id) const;
+    size_t get_vector_size();
 
    private:
     std::unordered_map<std::string, uint32_t> string_to_id;

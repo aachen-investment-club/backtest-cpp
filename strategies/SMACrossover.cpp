@@ -17,7 +17,7 @@ SMACrossover::SMACrossover(uint32_t sym_id, int shortPeriod, int longPeriod)
 }
 
 // onInit(const std::map<std::string, std::vector<Bar>>& availableData)
-void SMACrossover::onInit(const std::vector<std::map<uint32_t, Bar>>& availableData) {
+void SMACrossover::onInit(const std::vector<std::vector<Bar>>& availableData) {
     size_t n = availableData.size();
 
     if (n < static_cast<size_t>(longPeriod_)) {
@@ -47,7 +47,7 @@ void SMACrossover::onInit(const std::vector<std::map<uint32_t, Bar>>& availableD
     initialized_ = true;
 }
 
-std::map<uint32_t, std::optional<Signal>> SMACrossover::onBars(std::map<uint32_t, Bar>& bars,
+std::map<uint32_t, std::optional<Signal>> SMACrossover::onBars(std::vector<Bar>& bars,
                                                                std::map<uint32_t, Position>&) {
     if (!initialized_) {
         return {};  // Not ready yet
@@ -55,9 +55,9 @@ std::map<uint32_t, std::optional<Signal>> SMACrossover::onBars(std::map<uint32_t
 
     std::map<uint32_t, std::optional<Signal>> signalMap;
 
-    for (const auto& [id, bar] : bars) {
-        if (id != this->symbol_id) continue;
-        double newPrice = bars[id].close;
+    for (const auto& bar : bars) {
+        if (bar.symbol_id != this->symbol_id) continue;
+        double newPrice = bar.close;
 
         // Indicator update Logic
         prevShortMA_ = shortMA_;
@@ -119,7 +119,7 @@ Order SMACrossover::generateOrder(const Signal& signal, const Bar& currentBar,
 }
 
 std::map<uint32_t, Order> SMACrossover::generateOrders(const std::map<uint32_t, Signal>& signals,
-                                                       const std::map<uint32_t, Bar>& currentBars,
+                                                       const std::vector<Bar>& currentBars,
                                                        const double& maxInvest,
                                                        std::map<uint32_t, Position>& positions) {
     std::map<uint32_t, Order> orderMap;

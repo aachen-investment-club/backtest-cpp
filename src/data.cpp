@@ -8,6 +8,7 @@
 
 #include "backtest-cpp/data.h"
 #include "backtest-cpp/utils.h"
+#include "backtest-cpp/symbol_dictionary.h"
 
 void DataHandler::loadCSV(const std::string& filepath, uint32_t symbol_id,
                           const std::string_view mode) {
@@ -33,7 +34,7 @@ void DataHandler::loadCSV(const std::string& filepath, uint32_t symbol_id,
 
         if (row.size() >= 6) {  // Ensure we have all columns
             Bar bar;
-            std::map<uint32_t, Bar> symbolBarPair;
+            std::vector<Bar> symbolBarPair(symDict.get_vector_size());
 
             bar.symbol_id = symbol_id;
             bar.time = (mode == "nanoseconds") ? parseNanoseconds(row[0]) : parseDateTime(row[0]);
@@ -58,6 +59,12 @@ void DataHandler::loadCSV(const std::string& filepath, uint32_t symbol_id,
 
 void DataHandler::loadAllCSVs(const std::string& directory) {
     int counter{0};
+    for (auto const& dir_entry : std::filesystem::directory_iterator{directory}) { // necessary to fix the size of symDict before loading CSVs happen
+        if (dir_entry.is_regular_file() && dir_entry.path().extension() == ".csv") {
+            std::string filename = dir_entry.path().filename().string();
+            symDict.get_id(filename);
+        }
+    }
     for (auto const& dir_entry : std::filesystem::directory_iterator{directory}) {
         if (dir_entry.is_regular_file() && dir_entry.path().extension() == ".csv") {
             std::string filename = dir_entry.path().filename().string();
@@ -69,7 +76,7 @@ void DataHandler::loadAllCSVs(const std::string& directory) {
     std::cout << "Loaded " << counter << " csv files";
 }
 
-void DataHandler::synchronize(std::vector<std::map<uint32_t, Bar>>&) {
+void DataHandler::synchronize(std::vector<std::vector<Bar> >&) {
     // Collects all unique timestamps from all loaded instruments
     // Sorts them chronologically
     // For each timestamp:
@@ -80,7 +87,7 @@ void DataHandler::synchronize(std::vector<std::map<uint32_t, Bar>>&) {
     return;
 }
 
-std::map<uint32_t, Bar> DataHandler::getCurrentBars() const {
+std::vector<Bar> DataHandler::getCurrentBars() const {
     if (currentIndex_ == 0) {
         throw std::runtime_error("No bar has been processed yet. Call getNextBar() first.");
     }
@@ -92,7 +99,7 @@ std::map<uint32_t, Bar> DataHandler::getCurrentBars() const {
     return instrumentData_[currentIndex_ - 1];
 }
 
-std::map<uint32_t, Bar> DataHandler::getNextBars() {
+std::vector<Bar> DataHandler::getNextBars() {
     if (!hasMoreData()) {
         throw std::out_of_range("No more data available");
     }
