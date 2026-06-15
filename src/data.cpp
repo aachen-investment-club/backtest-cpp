@@ -10,8 +10,10 @@
 #include "backtest-cpp/utils.h"
 #include "backtest-cpp/symbol_dictionary.h"
 
+// be sure to add symbol of symbol_id to SymDict before running with: get_id(symbol);
 void DataHandler::loadCSV(const std::string& filepath, uint32_t symbol_id,
-                          const std::string_view mode) {
+                          const std::string_view mode) { 
+    
     std::ifstream file(filepath);
 
     if (!file) {

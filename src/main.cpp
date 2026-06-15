@@ -15,9 +15,6 @@
 
 #define DEBUG false
 
-std::map<std::string, uint32_t> symbolToId = {{"NQ", 0}, {"ES", 1}};
-uint32_t nq_id = symbolToId["NQ"];
-
 int main() {
     auto start = std::chrono::steady_clock::now();
 
@@ -29,7 +26,9 @@ int main() {
     symbol_dictionary symDict;
     DataHandler dataHandler(symDict);
     Portfolio portfolio({.initialCash = 100'000.0, .commission = 2.7, .leverage = 1.0});
-
+    
+    uint32_t nq_id = symDict.get_id("NQ"); // each symbol should be added to the dictionary before doing LoadCSV
+        
     SMACrossover strategy(nq_id, 10, 30);
 
     dataHandler.loadCSV("./data/NQ_sample.csv", nq_id);

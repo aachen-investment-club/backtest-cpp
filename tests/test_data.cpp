@@ -6,8 +6,8 @@
 #include "backtest-cpp/data.h"
 #include "backtest-cpp/types.h"
 
-const uint32_t NQ_ID = 0;
-const uint32_t SECOND_ID = 1;
+const uint32_t NQ_ID = 1;   // IDs start from 1
+const uint32_t SECOND_ID = 2;
 
 // ============================================================================
 // Test Fixture
@@ -22,6 +22,8 @@ class DataHandlerTest : public ::testing::Test {
     void SetUp() override {
         data = new DataHandler(symDict);
         testFilePath = "test_data_temp.csv";
+        symDict.get_id("NQ"); // NQ_ID = 1
+        symDict.get_id("SEC"); // SECOND_ID = 2
     }
 
     void TearDown() override {
@@ -198,7 +200,7 @@ TEST_F(DataHandlerTest, GetCurrentBarAfterGetNext) {
     data->loadCSV(testFilePath, NQ_ID);
 
     Bar next = data->getNextBars().at(NQ_ID);        // Get first bar
-    Bar current = data->getNextBars().at(NQ_ID);  // Should return same bar
+    Bar current = data->getCurrentBars().at(NQ_ID);  // Should return same bar
 
     // Both should be the first bar
     EXPECT_DOUBLE_EQ(next.close, current.close);
