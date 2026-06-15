@@ -1,28 +1,91 @@
-# Build
 build/
-build-debug/
-build-release/
+build-*/
+out/
+bin/
+lib/
+
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+CMakeUserPresets.json
+CTestTestfile.cmake
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+Testing/
+_deps/
+
+CPackConfig.cmake
+CPackSourceConfig.cmake
+_CPack_Packages/
+
+Makefile
+build.ninja
+.ninja_deps
+.ninja_log
+
 *.o
+*.obj
+*.gch
+*.pch
 *.a
-.cache/
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
 
-# IDE
-.vscode/
-.idea/
-*.swp
-
-# Profiling
+*.dSYM/
+*.pdb
+*.idb
+*.ilk
+*.exp
 *.prof
 gmon.out
 perf.data*
 callgrind.out.*
-
-# Testing
 *.gcda
 *.gcno
+*.gcov
+coverage/
 
-# Data (optional, maybe commit sample data)
+vcpkg_installed/
+vcpkg_packages/
+vcpkg_workspace/
+.conan/
+.conan2/
+
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+CMakeSettings.json
+.idea/
+cmake-build-*/
+CMakeLists.txt.user
+.clangd
+.cache/clangd/
+
+*.swp
+*.swo
+*~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.cache/
+*.log
+
 # data/*.csv
-
-# Other
 TODO.txt
