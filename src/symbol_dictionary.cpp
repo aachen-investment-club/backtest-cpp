@@ -5,7 +5,7 @@ uint32_t symbol_dictionary::get_id(const std::string& symbol) {
         return string_to_id[symbol];
     }
 
-    uint32_t new_id = next_id++; // ids start from 1
+    uint32_t new_id = ++last_id; // ids start from 1
     string_to_id[symbol] = new_id;
     id_to_string[new_id] = symbol;
 

@@ -28,7 +28,7 @@ int main() {
     Portfolio portfolio({.initialCash = 100'000.0, .commission = 2.7, .leverage = 1.0});
     
     uint32_t nq_id = symDict.get_id("NQ"); // each symbol should be added to the dictionary before doing LoadCSV
-        
+    std::cout << "NQ_ID: " << nq_id << std::endl;
     SMACrossover strategy(nq_id, 10, 30);
 
     dataHandler.loadCSV("./data/NQ_sample.csv", nq_id);
@@ -43,7 +43,6 @@ int main() {
         historicalData.push_back(dataHandler.getNextBars());
     }
     strategy.onInit(historicalData);
-
     std::cout << "Starting backtest..." << std::endl;
 
     // -------------------------------------------------
