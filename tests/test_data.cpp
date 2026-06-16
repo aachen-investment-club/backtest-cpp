@@ -180,12 +180,12 @@ TEST_F(DataHandlerTest, GetNextBarThrowsWhenNoMoreData) {
     static_cast<void>(data->getNextBars().at(NQ_ID));  // Get the only bar
 
     // Should throw when trying to get another
-    EXPECT_THROW(data->getNextBars().at(NQ_ID), std::out_of_range);
+    EXPECT_THROW(static_cast<void>(data->getNextBars().at(NQ_ID)), std::out_of_range);
 }
 
 TEST_F(DataHandlerTest, GetNextBarOnEmptyDataThrows) {
     // Don't load any data
-    EXPECT_THROW(data->getNextBars().at(NQ_ID), std::out_of_range);
+    EXPECT_THROW(static_cast<void>(data->getNextBars().at(NQ_ID)), std::out_of_range);
 }
 
 // ============================================================================
@@ -376,7 +376,7 @@ TEST_F(DataHandlerTest, VeryLargeDataset) {
     // Process all
     for (int i = 0; i < 10000; i++) {
         ASSERT_TRUE(data->hasMoreData());
-        data->getNextBars().at(NQ_ID);
+        static_cast<void>(data->getNextBars().at(NQ_ID));
     }
 
     EXPECT_FALSE(data->hasMoreData());
