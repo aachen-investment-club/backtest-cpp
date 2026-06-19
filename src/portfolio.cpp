@@ -16,22 +16,21 @@ std::map<std::uint32_t, Position>& Portfolio::getCurrentPositions() {
     return positions_;
 };
 
-double Portfolio::getInvestedValue(const std::map<std::uint32_t, Bar>& currentBars) const {
+double Portfolio::getInvestedValue(const std::vector<Bar>& currentBars) const {
     double totalPositionValue = 0;
     for (const auto& [symbol_id, position] : positions_) {
         // std::cout << "CurrentBars.size() " << currentBars.size() << std::endl;
-        auto it = currentBars.find(symbol_id);
-        if (it == currentBars.end()) {
+        if (currentBars[symbol_id].symbol_id == 0) { // ids start from 1, so 0 means doesn't exist
             // Use last known price or throw error - don't just skip!
             std::cerr << "ERROR: Missing price for position " << symbol_id << std::endl;
             // throw std::runtime_error("Cannot calculate equity without price");
         }
-        totalPositionValue += position.quantity * it->second.close;
+        totalPositionValue += position.quantity * currentBars[symbol_id].close;
     }
     return fabs(totalPositionValue);
 }
 
-double Portfolio::getTotalEquity(const std::map<std::uint32_t, Bar>& currentBars) const {
+double Portfolio::getTotalEquity(const std::vector<Bar>& currentBars) const {
     return getInvestedValue(currentBars) + availableCash_;
 };
 
@@ -45,25 +44,24 @@ std::vector<Order> Portfolio::getAllOrders(int64_t fromTime) const {
     return ordersWithinTimeline;
 };
 
-void Portfolio::closeAllPositions(const std::map<std::uint32_t, Bar>& currentBars) {
+void Portfolio::closeAllPositions(const std::vector<Bar>& currentBars) {
     auto it = positions_.begin();
     while (it != positions_.end()) {
         const uint32_t symbol_id = it->first;
         const Position& position = it->second;
 
         // Check if bar exists
-        auto barIt = currentBars.find(symbol_id);
-        if (barIt == currentBars.end()) {
+        if (currentBars[symbol_id].symbol_id == 0) {
             std::cerr << "WARNING: No price data for symbol " << symbol_id << std::endl;
             //++it;
             // continue;
         }
 
         // Build order using const references (no copies)
-        Order closeOrder{.time = barIt->second.time,
+        Order closeOrder{.time = currentBars[symbol_id].time,
                          .symbol_id = symbol_id,
                          .direction = (position.quantity > 0) ? SignalType::SELL : SignalType::BUY,
-                         .price = barIt->second.close,
+                         .price = currentBars[symbol_id].close,
                          .type = OrderType::MARKET,
                          .quantity = -position.quantity};
 
@@ -98,7 +96,7 @@ double Portfolio::getRealizedPnL() const {
     return totalPnl;
 }
 
-double Portfolio::getUnrealizedPnL(const std::map<std::uint32_t, Bar>& currentBars) const {
+double Portfolio::getUnrealizedPnL(const std::vector<Bar>& currentBars) const {
     double UnrealizedPnl = 0;
     for (const auto& [symbol_id, position] : positions_) {
         UnrealizedPnl +=

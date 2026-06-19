@@ -6,8 +6,8 @@
 #include "backtest-cpp/data.h"
 #include "backtest-cpp/types.h"
 
-const uint32_t NQ_ID = 0;
-const uint32_t SECOND_ID = 1;
+const uint32_t NQ_ID = 1;   // IDs start from 1
+const uint32_t SECOND_ID = 2;
 
 // ============================================================================
 // Test Fixture
@@ -22,6 +22,8 @@ class DataHandlerTest : public ::testing::Test {
     void SetUp() override {
         data = new DataHandler(symDict);
         testFilePath = "test_data_temp.csv";
+        symDict.get_id("NQ"); // NQ_ID = 1
+        symDict.get_id("SEC"); // SECOND_ID = 2
     }
 
     void TearDown() override {
@@ -158,15 +160,15 @@ TEST_F(DataHandlerTest, GetNextBarAdvancesIndex) {
 
     EXPECT_TRUE(data->hasMoreData());
 
-    data->getNextBars()[NQ_ID];
+    static_cast<void>(data->getNextBars().at(NQ_ID));
     EXPECT_TRUE(data->hasMoreData());  // 4 left
 
-    data->getNextBars()[NQ_ID];
+    static_cast<void>(data->getNextBars().at(NQ_ID));
     EXPECT_TRUE(data->hasMoreData());  // 3 left
 
-    data->getNextBars()[NQ_ID];
-    data->getNextBars()[NQ_ID];
-    data->getNextBars()[NQ_ID];
+    static_cast<void>(data->getNextBars().at(NQ_ID));
+    static_cast<void>(data->getNextBars().at(NQ_ID));
+    static_cast<void>(data->getNextBars().at(NQ_ID));
 
     EXPECT_FALSE(data->hasMoreData());  // All consumed
 }
@@ -175,15 +177,15 @@ TEST_F(DataHandlerTest, GetNextBarThrowsWhenNoMoreData) {
     createTestCSV(1);
     data->loadCSV(testFilePath, NQ_ID);
 
-    data->getNextBars()[NQ_ID];  // Get the only bar
+    static_cast<void>(data->getNextBars().at(NQ_ID));  // Get the only bar
 
     // Should throw when trying to get another
-    EXPECT_THROW(data->getNextBars()[NQ_ID], std::out_of_range);
+    EXPECT_THROW(static_cast<void>(data->getNextBars().at(NQ_ID)), std::out_of_range);
 }
 
 TEST_F(DataHandlerTest, GetNextBarOnEmptyDataThrows) {
     // Don't load any data
-    EXPECT_THROW(data->getNextBars()[NQ_ID], std::out_of_range);
+    EXPECT_THROW(static_cast<void>(data->getNextBars().at(NQ_ID)), std::out_of_range);
 }
 
 // ============================================================================
@@ -197,8 +199,8 @@ TEST_F(DataHandlerTest, GetCurrentBarAfterGetNext) {
     createTestCSV(3);
     data->loadCSV(testFilePath, NQ_ID);
 
-    Bar next = data->getNextBars()[NQ_ID];        // Get first bar
-    Bar current = data->getCurrentBars()[NQ_ID];  // Should return same bar
+    Bar next = data->getNextBars().at(NQ_ID);        // Get first bar
+    Bar current = data->getCurrentBars().at(NQ_ID);  // Should return same bar
 
     // Both should be the first bar
     EXPECT_DOUBLE_EQ(next.close, current.close);
@@ -209,7 +211,7 @@ TEST_F(DataHandlerTest, GetCurrentBarDoesNotAdvanceIndex) {
     createTestCSV(3);
     data->loadCSV(testFilePath, NQ_ID);
 
-    data->getNextBars()[NQ_ID];  // Advance to first bar
+    static_cast<void>(data->getNextBars().at(NQ_ID));  // Advance to first bar
 
     Bar current1 = data->getCurrentBars()[NQ_ID];
     Bar current2 = data->getCurrentBars()[NQ_ID];
@@ -246,8 +248,8 @@ TEST_F(DataHandlerTest, HasMoreDataFalseWhenExhausted) {
     createTestCSV(2);
     data->loadCSV(testFilePath, NQ_ID);
 
-    data->getNextBars()[NQ_ID];
-    data->getNextBars()[NQ_ID];
+    static_cast<void>(data->getNextBars().at(NQ_ID));
+    static_cast<void>(data->getNextBars().at(NQ_ID));
 
     EXPECT_FALSE(data->hasMoreData());
 }
@@ -265,9 +267,9 @@ TEST_F(DataHandlerTest, ResetAllowsReprocessing) {
     data->loadCSV(testFilePath, NQ_ID);
 
     // Process all bars
-    data->getNextBars()[NQ_ID];
-    data->getNextBars()[NQ_ID];
-    data->getNextBars()[NQ_ID];
+    static_cast<void>(data->getNextBars().at(NQ_ID));
+    static_cast<void>(data->getNextBars().at(NQ_ID));
+    static_cast<void>(data->getNextBars().at(NQ_ID));
 
     EXPECT_FALSE(data->hasMoreData());
 
@@ -282,12 +284,12 @@ TEST_F(DataHandlerTest, ResetRestartsFromBeginning) {
     createTestCSV(3);
     data->loadCSV(testFilePath, NQ_ID);
 
-    Bar firstBar = data->getNextBars()[NQ_ID];
-    data->getNextBars()[NQ_ID];  // Skip to second
+    Bar firstBar = data->getNextBars().at(NQ_ID);
+    static_cast<void>(data->getNextBars().at(NQ_ID));  // Skip to second
 
     data->reset();
 
-    Bar firstBarAgain = data->getNextBars()[NQ_ID];
+    Bar firstBarAgain = data->getNextBars().at(NQ_ID);
 
     EXPECT_DOUBLE_EQ(firstBar.close, firstBarAgain.close);
 }
@@ -309,8 +311,8 @@ TEST_F(DataHandlerTest, SizeUnchangedByGetNextBar) {
 
     size_t initialSize = data->size();
 
-    data->getNextBars()[NQ_ID];
-    data->getNextBars()[NQ_ID];
+    static_cast<void>(data->getNextBars().at(NQ_ID));
+    static_cast<void>(data->getNextBars().at(NQ_ID));
 
     EXPECT_EQ(data->size(), initialSize);
 }
@@ -326,7 +328,7 @@ TEST_F(DataHandlerTest, CompleteWorkflow) {
     // Process first 5 bars
     for (int i = 0; i < 5; i++) {
         ASSERT_TRUE(data->hasMoreData());
-        Bar bar = data->getNextBars()[NQ_ID];
+        Bar bar = data->getNextBars().at(NQ_ID);
         EXPECT_EQ(bar.symbol_id, NQ_ID);
     }
 
@@ -335,7 +337,7 @@ TEST_F(DataHandlerTest, CompleteWorkflow) {
     // Reset and start over
     data->reset();
 
-    Bar firstBar = data->getNextBars()[NQ_ID];
+    Bar firstBar = data->getNextBars().at(NQ_ID);
     EXPECT_DOUBLE_EQ(firstBar.close, 3705.0);  // Back to first
 }
 
@@ -374,7 +376,7 @@ TEST_F(DataHandlerTest, VeryLargeDataset) {
     // Process all
     for (int i = 0; i < 10000; i++) {
         ASSERT_TRUE(data->hasMoreData());
-        data->getNextBars()[NQ_ID];
+        static_cast<void>(data->getNextBars().at(NQ_ID));
     }
 
     EXPECT_FALSE(data->hasMoreData());
@@ -387,7 +389,7 @@ TEST_F(DataHandlerTest, ZeroVolumeBars) {
     file.close();
 
     data->loadCSV(testFilePath, NQ_ID);
-    Bar bar = data->getNextBars()[NQ_ID];
+    Bar bar = data->getNextBars().at(NQ_ID);
 
     EXPECT_EQ(bar.volume, 0);
 }

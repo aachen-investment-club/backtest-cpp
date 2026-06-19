@@ -12,17 +12,17 @@
 class Strategy {
    public:
     virtual ~Strategy() = default;
-    virtual void onInit(const std::vector<std::map<uint32_t, Bar>>& availableData) = 0;
+    virtual void onInit(const std::vector<std::vector<Bar>>& availableData) = 0;
 
     virtual std::map<uint32_t, std::optional<Signal>> onBars(
-        std::map<uint32_t, Bar>& bars, std::map<uint32_t, Position>& positions) = 0;
+        std::vector<Bar>& bars, std::map<uint32_t, Position>& positions) = 0;
 
     virtual Order generateOrder(const Signal& signal, const Bar& currentBar,
                                 const double& maxInvest,
                                 std::map<uint32_t, Position>& positions) = 0;
 
     virtual std::map<uint32_t, Order> generateOrders(const std::map<uint32_t, Signal>& signals,
-                                                     const std::map<uint32_t, Bar>& currentBars,
+                                                     const std::vector<Bar>& currentBars,
                                                      const double& maxInvest,
                                                      std::map<uint32_t, Position>& positions) = 0;
 };

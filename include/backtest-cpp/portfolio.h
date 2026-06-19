@@ -18,15 +18,15 @@ class Portfolio {
     Portfolio(const PortfolioConfig& config);
 
     std::map<std::uint32_t, Position>& getCurrentPositions();
-    double getInvestedValue(const std::map<std::uint32_t, Bar>& currentBars) const;
-    double getTotalEquity(const std::map<std::uint32_t, Bar>& currentBar) const;
+    double getInvestedValue(const std::vector<Bar>& currentBars) const;
+    double getTotalEquity(const std::vector<Bar>& currentBar) const;
     double getRealizedPnL() const;
-    double getUnrealizedPnL(const std::map<std::uint32_t, Bar>& currentBars) const;
+    double getUnrealizedPnL(const std::vector<Bar>& currentBars) const;
     bool checkOverdraft(const Order& order) const;
     std::vector<Order> getAllOrders(int64_t fromTime) const;
     std::vector<Trade> getAllTrades() const;
     double getAvailableCash() const;
-    void closeAllPositions(const std::map<std::uint32_t, Bar>& currentBars);
+    void closeAllPositions(const std::vector<Bar>& currentBars);
     void executeOrder(const Order& order, const bool close);
 
    private:

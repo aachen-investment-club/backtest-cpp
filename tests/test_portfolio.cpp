@@ -152,7 +152,7 @@ TEST_F(PortfolioTest, NegativeQuantityHandling) {
 // ============================================================================
 
 TEST_F(PortfolioTest, CalculateEquityWithSyntheticData) {
-    std::map<uint32_t, Bar> currentBars;
+    std::vector<Bar> currentBars(NQ_ID + 1);
     currentBars[NQ_ID] = createTestBar(NQ_ID, 100.0);
 
     double equity = portfolio->getTotalEquity(currentBars);
@@ -160,7 +160,7 @@ TEST_F(PortfolioTest, CalculateEquityWithSyntheticData) {
 }
 
 TEST_F(PortfolioTest, CInitialState) {
-    std::map<uint32_t, Bar> currentBars;
+    std::vector<Bar> currentBars(NQ_ID + 1);
     currentBars[NQ_ID] = createTestBar(NQ_ID, 100.0);
 
     EXPECT_DOUBLE_EQ(portfolio->getTotalEquity(currentBars), 100000.0);
@@ -168,7 +168,7 @@ TEST_F(PortfolioTest, CInitialState) {
 }
 
 TEST_F(PortfolioTest, CNoPositionsReturnsZeroInvestedValue) {
-    std::map<uint32_t, Bar> currentBars;
+    std::vector<Bar> currentBars(NQ_ID + 1);
     currentBars[NQ_ID] = createTestBar(NQ_ID, 100.0);
 
     double invested = portfolio->getInvestedValue(currentBars);
@@ -176,7 +176,7 @@ TEST_F(PortfolioTest, CNoPositionsReturnsZeroInvestedValue) {
 }
 
 TEST_F(PortfolioTest, CNoPositionsReturnsZeroUnrealizedPnL) {
-    std::map<uint32_t, Bar> currentBars;
+    std::vector<Bar> currentBars(NQ_ID + 1);
     currentBars[NQ_ID] = createTestBar(NQ_ID, 100.0);
 
     double pnl = portfolio->getUnrealizedPnL(currentBars);
@@ -207,8 +207,8 @@ TEST_F(PortfolioTest, OpenLongPositionCorrectInvestedValue) {
     Order order = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(order, false);
 
-    std::map<uint32_t, Bar> bars;
-    bars.insert({NQ_ID, createTestBar(NQ_ID, 105.0)});
+    std::vector<Bar> bars(NQ_ID + 1);
+    bars[NQ_ID] = createTestBar(NQ_ID, 105.0);
 
     EXPECT_DOUBLE_EQ(portfolio->getInvestedValue(bars), 1050.0);
 }
@@ -217,8 +217,8 @@ TEST_F(PortfolioTest, OpenLongPositionCorrectUnrealizedPnL) {
     Order order = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(order, false);
 
-    std::map<uint32_t, Bar> bars;
-    bars.insert({NQ_ID, createTestBar(NQ_ID, 105.0)});
+    std::vector<Bar> bars(NQ_ID + 1);
+    bars[NQ_ID] = createTestBar(NQ_ID, 105.0);
 
     EXPECT_DOUBLE_EQ(portfolio->getUnrealizedPnL(bars), 50.0 - 2.7);
 }
@@ -227,8 +227,8 @@ TEST_F(PortfolioTest, OpenLongPositionCorrectTotalEquity) {
     Order order = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(order, false);
 
-    std::map<uint32_t, Bar> bars;
-    bars.insert({NQ_ID, createTestBar(NQ_ID, 105.0)});
+    std::vector<Bar> bars(NQ_ID + 1);
+    bars[NQ_ID] = createTestBar(NQ_ID, 105.0);
 
     EXPECT_DOUBLE_EQ(portfolio->getTotalEquity(bars), 100047.30);
 }
@@ -257,8 +257,8 @@ TEST_F(PortfolioTest, OpenShortPositionCorrectInvestedValue) {
     Order order = createTestOrder(NQ_ID, SignalType::SELL, 100.0, -10);
     portfolio->executeOrder(order, false);
 
-    std::map<uint32_t, Bar> bars;
-    bars.insert({NQ_ID, createTestBar(NQ_ID, 95.0)});
+    std::vector<Bar> bars(NQ_ID + 1);
+    bars[NQ_ID] = createTestBar(NQ_ID, 95.0);
 
     EXPECT_DOUBLE_EQ(portfolio->getInvestedValue(bars), 950.0);
 }
@@ -267,8 +267,8 @@ TEST_F(PortfolioTest, OpenShortPositionCorrectUnrealizedPnL) {
     Order order = createTestOrder(NQ_ID, SignalType::SELL, 100.0, -10);
     portfolio->executeOrder(order, false);
 
-    std::map<uint32_t, Bar> bars;
-    bars.insert({NQ_ID, createTestBar(NQ_ID, 95.0)});
+    std::vector<Bar> bars(NQ_ID + 1);
+    bars[NQ_ID] = createTestBar(NQ_ID, 95.0);
 
     EXPECT_DOUBLE_EQ(portfolio->getUnrealizedPnL(bars), 50.0 - 2.7);
 }
@@ -277,8 +277,8 @@ TEST_F(PortfolioTest, OpenShortPositionLosesMoneyWhenPriceRises) {
     Order order = createTestOrder(NQ_ID, SignalType::SELL, 100.0, -10);
     portfolio->executeOrder(order, false);
 
-    std::map<uint32_t, Bar> bars;
-    bars.insert({NQ_ID, createTestBar(NQ_ID, 105.0)});
+    std::vector<Bar> bars(NQ_ID + 1);
+    bars[NQ_ID] = createTestBar(NQ_ID, 105.0);
 
     EXPECT_DOUBLE_EQ(portfolio->getUnrealizedPnL(bars), -50.0 - 2.7);
 }
@@ -344,8 +344,8 @@ TEST_F(PortfolioTest, CloseLongPositionWithLoss) {
 }
 
 TEST_F(PortfolioTest, CloseLongPositionTotalEquityConservation) {
-    std::map<uint32_t, Bar> bars1;
-    bars1.insert({NQ_ID, createTestBar(NQ_ID, 100.0)});
+    std::vector<Bar> bars1(NQ_ID + 1);
+    bars1[NQ_ID] = createTestBar(NQ_ID, 100.0);
 
     double initialEquity = portfolio->getTotalEquity(bars1);
 
@@ -355,8 +355,8 @@ TEST_F(PortfolioTest, CloseLongPositionTotalEquityConservation) {
     Order closeOrder = createTestOrder(NQ_ID, SignalType::SELL, 110.0, -10);
     portfolio->executeOrder(closeOrder, true);
 
-    std::map<uint32_t, Bar> bars2;
-    bars2.insert({NQ_ID, createTestBar(NQ_ID, 110.0)});
+    std::vector<Bar> bars2(NQ_ID + 1);
+    bars2[NQ_ID] = createTestBar(NQ_ID, 110.0);
     double finalEquity = portfolio->getTotalEquity(bars2);
 
     EXPECT_DOUBLE_EQ(finalEquity, initialEquity + portfolio->getRealizedPnL());
@@ -470,8 +470,8 @@ TEST_F(PortfolioTest, MultipleTradesCorrectTotalPnL) {
 }
 
 TEST_F(PortfolioTest, EquityConservationAcrossMultipleTrades) {
-    std::map<uint32_t, Bar> initialBars;
-    initialBars.insert({NQ_ID, createTestBar(NQ_ID, 100.0)});
+    std::vector<Bar> initialBars(NQ_ID + 1);
+    initialBars[NQ_ID] = createTestBar(NQ_ID, 100.0);
     double initialEquity = portfolio->getTotalEquity(initialBars);
 
     portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10), false);
@@ -479,8 +479,8 @@ TEST_F(PortfolioTest, EquityConservationAcrossMultipleTrades) {
     portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::BUY, 105.0, 20), false);
     portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::SELL, 108.0, -10), true);
 
-    std::map<uint32_t, Bar> finalBars;
-    finalBars.insert({NQ_ID, createTestBar(NQ_ID, 180.0)});
+    std::vector<Bar> finalBars(NQ_ID + 1);
+    finalBars[NQ_ID] = createTestBar(NQ_ID, 180.0);
     double finalEquity = portfolio->getTotalEquity(finalBars);
     double realizedPnL = portfolio->getRealizedPnL();
 

@@ -15,9 +15,6 @@
 
 #define DEBUG false
 
-std::map<std::string, uint32_t> symbolToId = {{"NQ", 0}, {"ES", 1}};
-uint32_t nq_id = symbolToId["NQ"];
-
 int main() {
     auto start = std::chrono::steady_clock::now();
 
@@ -29,7 +26,9 @@ int main() {
     symbol_dictionary symDict;
     DataHandler dataHandler(symDict);
     Portfolio portfolio({.initialCash = 100'000.0, .commission = 2.7, .leverage = 1.0});
-
+    
+    uint32_t nq_id = symDict.get_id("NQ"); // each symbol should be added to the dictionary before doing LoadCSV
+    std::cout << "NQ_ID: " << nq_id << std::endl;
     SMACrossover strategy(nq_id, 10, 30);
 
     dataHandler.loadCSV("./data/NQ_sample.csv", nq_id);
@@ -38,13 +37,12 @@ int main() {
     // -------------------------------------------------
     // Strategy warm-up (SMA lookback)
     // -------------------------------------------------
-    std::vector<std::map<uint32_t, Bar>> historicalData;
+    std::vector<std::vector<Bar>> historicalData;
 
     for (int i = 0; i < 30 && dataHandler.hasMoreData(); ++i) {
         historicalData.push_back(dataHandler.getNextBars());
     }
     strategy.onInit(historicalData);
-
     std::cout << "Starting backtest..." << std::endl;
 
     // -------------------------------------------------
@@ -59,10 +57,10 @@ int main() {
     // Main backtest loop
     // -------------------------------------------------
     while (dataHandler.hasMoreData()) {
-        std::map<uint32_t, Bar> bars = dataHandler.getNextBars();
+        std::vector<Bar> bars = dataHandler.getNextBars();
 
         auto posIt = portfolio.getCurrentPositions().find(nq_id);
-        if (posIt != portfolio.getCurrentPositions().end() && bars.find(nq_id) == bars.end()) {
+        if (posIt != portfolio.getCurrentPositions().end() && bars[nq_id].symbol_id == 0) {
             std::cerr << "BUG: Have NQ position but bars doesn't contain NQ at bar " << barCount
                       << std::endl;
         }
@@ -108,7 +106,14 @@ int main() {
         // std::cout << "DEBUG: Logged Equity: " << portfolio.getTotalEquity(bars) << std::endl;
 
         // Record equity every bar (CRITICAL)
-        equityCurve.push_back({bars.begin()->second.time, portfolio.getTotalEquity(bars)});
+        int64_t barTime = 0; // find time of the first bar in bars
+        for(auto &curBar : bars) {  // necessary to search until dataHandler::synchronize is implemented
+            if(curBar.symbol_id != 0) {
+                barTime = curBar.time;
+                break;
+            }
+        }
+        equityCurve.push_back({barTime, portfolio.getTotalEquity(bars)});
 
         ++barCount;
     }
@@ -116,10 +121,17 @@ int main() {
     // -------------------------------------------------
     // Final liquidation
     // -------------------------------------------------
-    std::map<uint32_t, Bar> finalBars = dataHandler.getCurrentBars();
+    std::vector<Bar> finalBars = dataHandler.getCurrentBars();
     portfolio.closeAllPositions(finalBars);
-
-    equityCurve.push_back({finalBars.begin()->second.time, portfolio.getTotalEquity(finalBars)});
+    
+    int64_t barTime = 0; // find time of the first bar in finalBars
+    for(auto &curBar : finalBars) {  // necessary to search until dataHandler::synchronize is implemented
+        if(curBar.symbol_id != 0) {
+            barTime = curBar.time;
+            break;
+        }
+    }
+    equityCurve.push_back({barTime, portfolio.getTotalEquity(finalBars)});   // TODO !!!
 
     // -------------------------------------------------
     // Backtest summary
