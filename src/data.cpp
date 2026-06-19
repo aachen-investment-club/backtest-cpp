@@ -89,7 +89,7 @@ void DataHandler::synchronize(std::vector<std::vector<Bar> >&) {
     return;
 }
 
-std::vector<Bar> DataHandler::getCurrentBars() const {
+const std::vector<Bar>& DataHandler::getCurrentBars() const {
     if (currentIndex_ == 0) {
         throw std::runtime_error("No bar has been processed yet. Call getNextBar() first.");
     }
@@ -101,7 +101,7 @@ std::vector<Bar> DataHandler::getCurrentBars() const {
     return instrumentData_[currentIndex_ - 1];
 }
 
-std::vector<Bar> DataHandler::getNextBars() {
+const std::vector<Bar>& DataHandler::getNextBars() {
     if (!hasMoreData()) {
         throw std::out_of_range("No more data available");
     }

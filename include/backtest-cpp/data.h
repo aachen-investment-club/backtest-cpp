@@ -17,8 +17,8 @@ class DataHandler {
     void loadCSV(const std::string& filepath, uint32_t symbol_id,
                  const std::string_view mode = "string");
     void loadAllCSVs(const std::string& directory);
-    std::vector<Bar> getNextBars();
-    std::vector<Bar> getCurrentBars() const;
+    const std::vector<Bar>& getNextBars();
+    const std::vector<Bar>& getCurrentBars() const;
     bool hasMoreData() const;
     void reset();
     void synchronize(std::vector<std::vector<Bar>>& rawData);
