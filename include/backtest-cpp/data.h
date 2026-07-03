@@ -14,6 +14,10 @@ class DataHandler {
    public:
     DataHandler(symbol_dictionary& sym_dict) : symDict(sym_dict) {}
 
+    // Binary mapping
+    void makeBinary(const std::string& csv_filepath, const std::string& binary_filepath, uint32_t symbol_id);
+    std::vector<Bar> mapBinary(const std::string& binary_filepath);
+
     void loadCSV(const std::string& filepath, uint32_t symbol_id,
                  const std::string_view mode = "string");
     void loadAllCSVs(const std::string& directory);

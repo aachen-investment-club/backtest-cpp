@@ -4,7 +4,7 @@
 #include <optional>
 #include <vector>
 #if defined(__linux__)
-#include <sys/resource.h>
+#include <sys/resource.h> // for linux native performance tracking
 #endif
 
 #include "backtest-cpp/data.h"
@@ -12,8 +12,15 @@
 #include "backtest-cpp/portfolio.h"
 #include "backtest-cpp/strategies/smacrossover.h"
 #include "backtest-cpp/symbol_dictionary.h"
+#include <filesystem>
 
+// -------------------------------------------------
+// BACKTEST PARAMETERS
+// -------------------------------------------------
 #define DEBUG false
+inline const std::filesystem::path DATA_DIRECTORY{"./data/used_data"};
+// -------------------------------------------------
+
 
 int main() {
     auto start = std::chrono::steady_clock::now();
