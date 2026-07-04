@@ -19,7 +19,7 @@
 // BACKTEST PARAMETERS
 // -------------------------------------------------
 #define DEBUG false
-inline const std::filesystem::path DATA_DIRECTORY{"./data/used_data"};
+inline const std::string DATA_DIRECTORY{"./data/used_data"};
 // -------------------------------------------------
 
 int main() {
