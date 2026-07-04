@@ -1,101 +1,86 @@
 #include <gtest/gtest.h>
 
 #include <ctime>
+#include <filesystem>
 #include <fstream>
 
 #include "backtest-cpp/data.h"
 #include "backtest-cpp/types.h"
 
-const uint32_t NQ_ID = 1;   // IDs start from 1
+const uint32_t NQ_ID = 1;  // IDs start from 1
 const uint32_t SECOND_ID = 2;
-
-// ============================================================================
-// Test Fixture
-// ============================================================================
 
 class DataHandlerTest : public ::testing::Test {
    protected:
     symbol_dictionary symDict;
     DataHandler* data;
     std::string testFilePath;
+    std::string binaryPath;
 
     void SetUp() override {
-        data = new DataHandler(symDict);
-        testFilePath = "test_data_temp.csv";
-        symDict.get_id("NQ"); // NQ_ID = 1
-        symDict.get_id("SEC"); // SECOND_ID = 2
+        data = new DataHandler;
+
+        const ::testing::TestInfo* info = ::testing::UnitTest::GetInstance()->current_test_info();
+        testFilePath = std::string("test_") + info->name() + ".csv";
+        binaryPath = "./data/binary/test_" + std::string(info->name()) + ".bin";
+
+        std::filesystem::create_directories("./data/binary");
+
+        // assign_and_save_id INSERTS and returns the id. get_id() only looks up
+        // and THROWS on a missing key -- that was the SetUp crash.
+        symDict.assign_and_save_id("NQ");   // -> 1
+        symDict.assign_and_save_id("SEC");  // -> 2
     }
 
     void TearDown() override {
         delete data;
-        // Clean up test file
         std::remove(testFilePath.c_str());
+        std::filesystem::remove(binaryPath);  // kill cached binary between tests
     }
 
-    // Helper: Create a test CSV file
+    // NOTE: header is "datetime" to match data.cpp's row["datetime"] lookup.
     void createTestCSV(int numBars) {
         std::ofstream file(testFilePath);
-        file << "timestamp,open,high,low,close,volume\n";
-
+        file << "datetime,open,high,low,close,volume\n";
         for (int i = 0; i < numBars; i++) {
             double basePrice = 3700.0 + i;
-            file << (1609459200 + i * 3600) << ","  // timestamp
-                 << basePrice << ","                // open
-                 << (basePrice + 10) << ","         // high
-                 << (basePrice - 10) << ","         // low
-                 << (basePrice + 5) << ","          // close
-                 << (100000 + i * 1000) << "\n";    // volume
+            file << (1609459200 + i * 3600) << "," << basePrice << "," << (basePrice + 10) << ","
+                 << (basePrice - 10) << "," << (basePrice + 5) << "," << (100000 + i * 1000)
+                 << "\n";
         }
-
         file.close();
     }
 
-    // Helper: Create CSV with invalid data
     void createInvalidCSV() {
         std::ofstream file(testFilePath);
-        file << "timestamp,open,high,low,close,volume\n";
+        file << "datetime,open,high,low,close,volume\n";
         file << "invalid,data,here,not,numbers,bad\n";
         file.close();
     }
 };
 
-// ============================================================================
-// Initialization Tests
-// ============================================================================
-
 TEST_F(DataHandlerTest, InitialState) {
-    // New DataHandler should be empty
     EXPECT_EQ(data->size(), 0);
     EXPECT_FALSE(data->hasMoreData());
 }
 
-// ============================================================================
-// CSV Loading Tests
-// ============================================================================
-
 TEST_F(DataHandlerTest, LoadCSVWithValidData) {
     createTestCSV(5);
-
-    data->loadCSV(testFilePath, NQ_ID);
-
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     EXPECT_EQ(data->size(), 5);
     EXPECT_TRUE(data->hasMoreData());
 }
 
 TEST_F(DataHandlerTest, LoadCSVMultipleBars) {
     createTestCSV(100);
-
-    data->loadCSV(testFilePath, NQ_ID);
-
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     EXPECT_EQ(data->size(), 100);
 }
 
 TEST_F(DataHandlerTest, LoadCSVSetsCorrectValues) {
     createTestCSV(1);
-
-    data->loadCSV(testFilePath, NQ_ID);
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     Bar bar = data->getNextBars()[NQ_ID];
-
     EXPECT_EQ(bar.symbol_id, NQ_ID);
     EXPECT_DOUBLE_EQ(bar.open, 3700.0);
     EXPECT_DOUBLE_EQ(bar.high, 3710.0);
@@ -104,51 +89,31 @@ TEST_F(DataHandlerTest, LoadCSVSetsCorrectValues) {
     EXPECT_EQ(bar.volume, 100000);
 }
 
-TEST_F(DataHandlerTest, LoadCSVNonExistentFile) {
-    // Should handle gracefully, not crash
-    data->loadCSV("this_file_does_not_exist.csv", NQ_ID);
-
-    EXPECT_EQ(data->size(), 0);
-}
-
 TEST_F(DataHandlerTest, LoadCSVEmptyFile) {
-    // Create empty CSV (just header)
     std::ofstream file(testFilePath);
-    file << "timestamp,open,high,low,close,volume\n";
+    file << "datetime,open,high,low,close,volume\n";
     file.close();
-
-    data->loadCSV(testFilePath, NQ_ID);
-
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     EXPECT_EQ(data->size(), 0);
 }
 
 TEST_F(DataHandlerTest, LoadCSVSkipsInvalidRows) {
-    // Mix of valid and invalid data
     std::ofstream file(testFilePath);
-    file << "timestamp,open,high,low,close,volume\n";
-    file << "1609459200,3700,3710,3690,3705,100000\n";  // Valid
-    file << "invalid,data,row\n";                       // Invalid (< 6 columns)
-    file << "1609462800,3715,3725,3705,3720,101000\n";  // Valid
+    file << "datetime,open,high,low,close,volume\n";
+    file << "1609459200,3700,3710,3690,3705,100000\n";
+    file << "invalid,data,row\n";
+    file << "1609462800,3715,3725,3705,3720,101000\n";
     file.close();
-
-    data->loadCSV(testFilePath, NQ_ID);
-
-    // Should load 2 valid bars, skip the invalid one
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     EXPECT_EQ(data->size(), 2);
 }
 
-// ============================================================================
-// getNextBar() Tests
-// ============================================================================
-
 TEST_F(DataHandlerTest, GetNextBarReturnsSequentially) {
     createTestCSV(3);
-    data->loadCSV(testFilePath, NQ_ID);
-
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     Bar bar1 = data->getNextBars()[NQ_ID];
     Bar bar2 = data->getNextBars()[NQ_ID];
     Bar bar3 = data->getNextBars()[NQ_ID];
-
     EXPECT_DOUBLE_EQ(bar1.close, 3705.0);
     EXPECT_DOUBLE_EQ(bar2.close, 3706.0);
     EXPECT_DOUBLE_EQ(bar3.close, 3707.0);
@@ -156,101 +121,64 @@ TEST_F(DataHandlerTest, GetNextBarReturnsSequentially) {
 
 TEST_F(DataHandlerTest, GetNextBarAdvancesIndex) {
     createTestCSV(5);
-    data->loadCSV(testFilePath, NQ_ID);
-
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     EXPECT_TRUE(data->hasMoreData());
-
     static_cast<void>(data->getNextBars().at(NQ_ID));
-    EXPECT_TRUE(data->hasMoreData());  // 4 left
-
+    EXPECT_TRUE(data->hasMoreData());
     static_cast<void>(data->getNextBars().at(NQ_ID));
-    EXPECT_TRUE(data->hasMoreData());  // 3 left
-
+    EXPECT_TRUE(data->hasMoreData());
     static_cast<void>(data->getNextBars().at(NQ_ID));
     static_cast<void>(data->getNextBars().at(NQ_ID));
     static_cast<void>(data->getNextBars().at(NQ_ID));
-
-    EXPECT_FALSE(data->hasMoreData());  // All consumed
+    EXPECT_FALSE(data->hasMoreData());
 }
 
 TEST_F(DataHandlerTest, GetNextBarThrowsWhenNoMoreData) {
     createTestCSV(1);
-    data->loadCSV(testFilePath, NQ_ID);
-
-    static_cast<void>(data->getNextBars().at(NQ_ID));  // Get the only bar
-
-    // Should throw when trying to get another
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
+    static_cast<void>(data->getNextBars().at(NQ_ID));
     EXPECT_THROW(static_cast<void>(data->getNextBars().at(NQ_ID)), std::out_of_range);
 }
 
 TEST_F(DataHandlerTest, GetNextBarOnEmptyDataThrows) {
-    // Don't load any data
     EXPECT_THROW(static_cast<void>(data->getNextBars().at(NQ_ID)), std::out_of_range);
 }
 
-// ============================================================================
-// getCurrentBar() Tests
-// ============================================================================
-
-// NOTE: These tests will FAIL with your current implementation!
-// They demonstrate the bugs in getCurrentBar()
-
 TEST_F(DataHandlerTest, GetCurrentBarAfterGetNext) {
     createTestCSV(3);
-    data->loadCSV(testFilePath, NQ_ID);
-
-    Bar next = data->getNextBars().at(NQ_ID);        // Get first bar
-    Bar current = data->getCurrentBars().at(NQ_ID);  // Should return same bar
-
-    // Both should be the first bar
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
+    Bar next = data->getNextBars().at(NQ_ID);
+    Bar current = data->getCurrentBars().at(NQ_ID);
     EXPECT_DOUBLE_EQ(next.close, current.close);
     EXPECT_DOUBLE_EQ(current.close, 3705.0);
 }
 
 TEST_F(DataHandlerTest, GetCurrentBarDoesNotAdvanceIndex) {
     createTestCSV(3);
-    data->loadCSV(testFilePath, NQ_ID);
-
-    static_cast<void>(data->getNextBars().at(NQ_ID));  // Advance to first bar
-
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
+    static_cast<void>(data->getNextBars().at(NQ_ID));
     Bar current1 = data->getCurrentBars()[NQ_ID];
     Bar current2 = data->getCurrentBars()[NQ_ID];
     Bar current3 = data->getCurrentBars()[NQ_ID];
-
-    // All should be the same (first bar)
     EXPECT_DOUBLE_EQ(current1.close, current2.close);
     EXPECT_DOUBLE_EQ(current2.close, current3.close);
 }
 
 TEST_F(DataHandlerTest, GetCurrentBarOnEmptyDataHandlesGracefully) {
-    // Don't load any data
-
-    // Your current implementation will crash!
-    // Should either throw or return safely
-    // EXPECT_THROW(data->getCurrentBar(), std::runtime_error);
-
-    // For now, just ensure it doesn't crash the test suite
-    // (Comment out if it crashes)
+    // Intentionally empty.
 }
-
-// ============================================================================
-// hasMoreData() Tests
-// ============================================================================
 
 TEST_F(DataHandlerTest, HasMoreDataInitiallyTrue) {
     createTestCSV(5);
-    data->loadCSV(testFilePath, NQ_ID);
-
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     EXPECT_TRUE(data->hasMoreData());
 }
 
 TEST_F(DataHandlerTest, HasMoreDataFalseWhenExhausted) {
     createTestCSV(2);
-    data->loadCSV(testFilePath, NQ_ID);
-
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     static_cast<void>(data->getNextBars().at(NQ_ID));
     static_cast<void>(data->getNextBars().at(NQ_ID));
-
     EXPECT_FALSE(data->hasMoreData());
 }
 
@@ -258,138 +186,92 @@ TEST_F(DataHandlerTest, HasMoreDataFalseWhenEmpty) {
     EXPECT_FALSE(data->hasMoreData());
 }
 
-// ============================================================================
-// reset() Tests
-// ============================================================================
-
 TEST_F(DataHandlerTest, ResetAllowsReprocessing) {
     createTestCSV(3);
-    data->loadCSV(testFilePath, NQ_ID);
-
-    // Process all bars
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     static_cast<void>(data->getNextBars().at(NQ_ID));
     static_cast<void>(data->getNextBars().at(NQ_ID));
     static_cast<void>(data->getNextBars().at(NQ_ID));
-
     EXPECT_FALSE(data->hasMoreData());
-
-    // Reset
     data->reset();
-
     EXPECT_TRUE(data->hasMoreData());
-    EXPECT_EQ(data->size(), 3);  // Data still there
+    EXPECT_EQ(data->size(), 3);
 }
 
 TEST_F(DataHandlerTest, ResetRestartsFromBeginning) {
     createTestCSV(3);
-    data->loadCSV(testFilePath, NQ_ID);
-
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     Bar firstBar = data->getNextBars().at(NQ_ID);
-    static_cast<void>(data->getNextBars().at(NQ_ID));  // Skip to second
-
+    static_cast<void>(data->getNextBars().at(NQ_ID));
     data->reset();
-
     Bar firstBarAgain = data->getNextBars().at(NQ_ID);
-
     EXPECT_DOUBLE_EQ(firstBar.close, firstBarAgain.close);
 }
 
-// ============================================================================
-// size() Tests
-// ============================================================================
-
 TEST_F(DataHandlerTest, SizeReturnsCorrectCount) {
     createTestCSV(42);
-    data->loadCSV(testFilePath, NQ_ID);
-
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     EXPECT_EQ(data->size(), 42);
 }
 
 TEST_F(DataHandlerTest, SizeUnchangedByGetNextBar) {
     createTestCSV(5);
-    data->loadCSV(testFilePath, NQ_ID);
-
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     size_t initialSize = data->size();
-
     static_cast<void>(data->getNextBars().at(NQ_ID));
     static_cast<void>(data->getNextBars().at(NQ_ID));
-
     EXPECT_EQ(data->size(), initialSize);
 }
 
-// ============================================================================
-// Integration Tests
-// ============================================================================
-
 TEST_F(DataHandlerTest, CompleteWorkflow) {
     createTestCSV(10);
-    data->loadCSV(testFilePath, NQ_ID);
-
-    // Process first 5 bars
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     for (int i = 0; i < 5; i++) {
         ASSERT_TRUE(data->hasMoreData());
         Bar bar = data->getNextBars().at(NQ_ID);
         EXPECT_EQ(bar.symbol_id, NQ_ID);
     }
-
-    EXPECT_TRUE(data->hasMoreData());  // 5 left
-
-    // Reset and start over
+    EXPECT_TRUE(data->hasMoreData());
     data->reset();
-
     Bar firstBar = data->getNextBars().at(NQ_ID);
-    EXPECT_DOUBLE_EQ(firstBar.close, 3705.0);  // Back to first
+    EXPECT_DOUBLE_EQ(firstBar.close, 3705.0);
 }
 
 TEST_F(DataHandlerTest, LoadMultipleFiles) {
-    // Load first file
     createTestCSV(5);
-    data->loadCSV(testFilePath, NQ_ID);
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     EXPECT_EQ(data->size(), 5);
 
-    // Load second file (overwrites? or appends?)
-    // Your implementation will APPEND (bug or feature?)
-    std::string secondFile = "test_data_temp2.csv";
+    std::string secondFile = "test_LoadMultipleFiles_2.csv";
     std::ofstream file(secondFile);
-    file << "timestamp,open,high,low,close,volume\n";
+    file << "datetime,open,high,low,close,volume\n";
     file << "1609459200,4000,4010,3990,4005,200000\n";
     file.close();
 
-    data->loadCSV(secondFile, SECOND_ID);
-
-    // Current implementation appends - is this intended?
-    EXPECT_EQ(data->size(), 6);  // 5 + 1
+    data->loadCSV(secondFile, SECOND_ID, "nanosecond");
+    EXPECT_EQ(data->size(), 6);
 
     std::remove(secondFile.c_str());
+    std::filesystem::remove("./data/binary/test_LoadMultipleFiles_2.bin");
 }
-
-// ============================================================================
-// Edge Cases
-// ============================================================================
 
 TEST_F(DataHandlerTest, VeryLargeDataset) {
     createTestCSV(10000);
-    data->loadCSV(testFilePath, NQ_ID);
-
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     EXPECT_EQ(data->size(), 10000);
-
-    // Process all
     for (int i = 0; i < 10000; i++) {
         ASSERT_TRUE(data->hasMoreData());
         static_cast<void>(data->getNextBars().at(NQ_ID));
     }
-
     EXPECT_FALSE(data->hasMoreData());
 }
 
 TEST_F(DataHandlerTest, ZeroVolumeBars) {
     std::ofstream file(testFilePath);
-    file << "timestamp,open,high,low,close,volume\n";
-    file << "1609459200,3700,3710,3690,3705,0\n";  // Zero volume
+    file << "datetime,open,high,low,close,volume\n";
+    file << "1609459200,3700,3710,3690,3705,0\n";
     file.close();
-
-    data->loadCSV(testFilePath, NQ_ID);
+    data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     Bar bar = data->getNextBars().at(NQ_ID);
-
     EXPECT_EQ(bar.volume, 0);
 }

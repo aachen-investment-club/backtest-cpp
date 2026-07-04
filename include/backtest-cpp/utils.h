@@ -1,7 +1,7 @@
 #include <chrono>
+#include <cstdint>
 #include <string>
 #include <string_view>
-#include <cstdint> 
 
 // String utilities
 std::string extractSymbolFromPath(const std::string& filepath);

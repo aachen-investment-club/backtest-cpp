@@ -4,8 +4,10 @@
 #include <optional>
 #include <vector>
 #if defined(__linux__)
-#include <sys/resource.h>
+#include <sys/resource.h>  // for linux native performance tracking
 #endif
+
+#include <filesystem>
 
 #include "backtest-cpp/data.h"
 #include "backtest-cpp/performance.h"
@@ -13,7 +15,12 @@
 #include "backtest-cpp/strategies/smacrossover.h"
 #include "backtest-cpp/symbol_dictionary.h"
 
+// -------------------------------------------------
+// BACKTEST PARAMETERS
+// -------------------------------------------------
 #define DEBUG false
+inline const std::string DATA_DIRECTORY{"./data/used_data"};
+// -------------------------------------------------
 
 int main() {
     auto start = std::chrono::steady_clock::now();
@@ -23,16 +30,18 @@ int main() {
     // -------------------------------------------------
     // Initialization
     // -------------------------------------------------
+    // 1. Initialization
     symbol_dictionary symDict;
-    DataHandler dataHandler(symDict);
+    DataHandler dataHandler;
     Portfolio portfolio({.initialCash = 100'000.0, .commission = 2.7, .leverage = 1.0});
-    
-    uint32_t nq_id = symDict.get_id("NQ"); // each symbol should be added to the dictionary before doing LoadCSV
-    std::cout << "NQ_ID: " << nq_id << std::endl;
-    SMACrossover strategy(nq_id, 10, 30);
 
-    dataHandler.loadCSV("./data/NQ_sample.csv", nq_id);
-    // dataHandler.loadAllCSVs("./data"); // TODO
+    // 2. LOAD DATA FIRST!
+    dataHandler.loadAllCSVs(DATA_DIRECTORY, symDict, "string");
+
+    uint32_t nq_id = symDict.get_id("NQ_sample.csv");
+    std::cout << "NQ_ID from Dictionary: " << nq_id << std::endl;
+
+    SMACrossover strategy(nq_id, 10, 30);
 
     // -------------------------------------------------
     // Strategy warm-up (SMA lookback)
@@ -60,7 +69,7 @@ int main() {
         std::vector<Bar> bars = dataHandler.getNextBars();
 
         auto posIt = portfolio.getCurrentPositions().find(nq_id);
-        if (posIt != portfolio.getCurrentPositions().end() && bars[nq_id].symbol_id == 0) {
+        if (posIt != portfolio.getCurrentPositions().end() && bars[nq_id].time == 0) {
             std::cerr << "BUG: Have NQ position but bars doesn't contain NQ at bar " << barCount
                       << std::endl;
         }
@@ -68,7 +77,7 @@ int main() {
         std::map<uint32_t, std::optional<Signal>> signalMap =
             strategy.onBars(bars, portfolio.getCurrentPositions());
 
-        for (const auto& [symbol, signal] : signalMap) {
+        for (const auto &[symbol, signal] : signalMap) {
             if (signal.has_value()) {
                 Order order = strategy.generateOrder(signal.value(), bars[symbol], 10'000,
                                                      portfolio.getCurrentPositions());
@@ -106,15 +115,16 @@ int main() {
         // std::cout << "DEBUG: Logged Equity: " << portfolio.getTotalEquity(bars) << std::endl;
 
         // Record equity every bar (CRITICAL)
-        int64_t barTime = 0; // find time of the first bar in bars
-        for(auto &curBar : bars) {  // necessary to search until dataHandler::synchronize is implemented
-            if(curBar.symbol_id != 0) {
+        int64_t barTime = 0;
+        for (const auto &curBar : bars) {
+            if (curBar.time > barTime) {
                 barTime = curBar.time;
-                break;
             }
         }
-        equityCurve.push_back({barTime, portfolio.getTotalEquity(bars)});
 
+        if (barTime > 0) {
+            equityCurve.push_back({barTime, portfolio.getTotalEquity(bars)});
+        }
         ++barCount;
     }
 
@@ -123,15 +133,15 @@ int main() {
     // -------------------------------------------------
     std::vector<Bar> finalBars = dataHandler.getCurrentBars();
     portfolio.closeAllPositions(finalBars);
-    
-    int64_t barTime = 0; // find time of the first bar in finalBars
-    for(auto &curBar : finalBars) {  // necessary to search until dataHandler::synchronize is implemented
-        if(curBar.symbol_id != 0) {
+
+    int64_t barTime = 0;  // find time of the first bar in finalBars
+    for (auto &curBar : finalBars) {
+        if (curBar.time != 0) {
             barTime = curBar.time;
             break;
         }
     }
-    equityCurve.push_back({barTime, portfolio.getTotalEquity(finalBars)});   // TODO !!!
+    equityCurve.push_back({barTime, portfolio.getTotalEquity(finalBars)});  // TODO !!!
 
     // -------------------------------------------------
     // Backtest summary

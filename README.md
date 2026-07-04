@@ -25,7 +25,6 @@ cmake --build --preset release
 ## Test
 ```bash
 ctest --preset release
-# (CI includes running ctest and the backtest binary)
 ```
 
 ## Benchmark
@@ -67,8 +66,8 @@ The goal of this project is to build this rather standard backtester into a low-
 - [ ] (!) **Fixed-Point Math:** Replace `double` for prices with `int64_t` fixed-point arithmetic (e.g., price * 10,000) to ensure deterministic logic and faster comparisons.
 
 ### Phase 2: Binary Data Mapping
-- [ ] (!) **Memory Mapped I/O (`mmap`):** Map data files directly into process memory instead of performing user-space I/O copies.
-- [ ] **Binary Data Format:** Implement a custom binary dump format to bypass CSV parsing entirely during the hot path.
+- [X] (!) **Memory Mapped I/O (`mmap`):** Map data files directly into process memory instead of performing user-space I/O copies.
+- [X] **Binary Data Format:** Implement a custom binary dump format to bypass CSV parsing entirely during the hot path.
 - [ ] (!) **Zero-Copy Data Ingestion:** Refactor data passing so that the `Strategy` and `Portfolio` consume references/pointers directly from a memory-mapped buffer, eliminating data copies.
 - [ ] **Custom Memory Pool:** Implement `std::pmr::memory_resource` for any unavoidable dynamic allocations during execution.
 
@@ -86,12 +85,14 @@ The goal of this project is to build this rather standard backtester into a low-
 - [ ] **Web Dashboard:** Build a real-time visualization dashboard (React/TypeScript) to monitor backtest progress and equity curves.
   
 ### Current Components
-- **DataHandler**: CSV loading and bar iteration
+- **DataHandler**: CSV parsing, .bin cashing and loading, bar iteration
+- **SymDict**: Internal symbol to uint32_t map for fast iteration
 - **Portfolio**: Position tracking, P&L calculation, order execution
 - **Strategy**: Base class for trading strategies (SMA Crossover implemented)
+- **Performance**: Trading metric calculation and reporting
 - **Types**: Core domain objects (Bar, Order, Signal, Trade, Position)
 
 ### Event Flow
 ```
-Market Data → Strategy → Signal → Order → Portfolio → Execution
+Market Data → SymDict → Strategy → Signal → Order → Portfolio → Execution
 ```

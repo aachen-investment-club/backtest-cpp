@@ -1,5 +1,15 @@
 add_library(backtest_core)
 add_library(BacktestCpp::Core ALIAS backtest_core)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+include(FetchContent)
+FetchContent_Declare(
+    csv_parser
+    URL https://vincentlaucsb.github.io/csv-parser/csv.hpp
+    DOWNLOAD_NO_EXTRACT TRUE
+    SYSTEM
+)
+FetchContent_MakeAvailable(csv_parser)
 
 set_target_properties(backtest_core PROPERTIES 
     EXPORT_NAME Core
@@ -8,7 +18,14 @@ set_target_properties(backtest_core PROPERTIES
 
 target_compile_features(backtest_core PUBLIC cxx_std_20)
 
-target_link_libraries(backtest_core PRIVATE $<BUILD_INTERFACE:BacktestCpp::Warnings>)
+find_package(Threads REQUIRED)
+
+target_include_directories(backtest_core SYSTEM PRIVATE "${csv_parser_SOURCE_DIR}")
+target_link_libraries(backtest_core 
+    PRIVATE 
+        $<BUILD_INTERFACE:BacktestCpp::Warnings>
+        Threads::Threads
+)
 
 target_sources(backtest_core
     PRIVATE
