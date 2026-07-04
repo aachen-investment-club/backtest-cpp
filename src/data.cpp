@@ -110,6 +110,9 @@ void DataHandler::loadCSV(const std::string& csv_filepath, uint32_t symbol_id,
         return;
     }
 
+    // Ensure binary_directory exists
+    std::filesystem::create_directories(binary_dir);
+
     // Check binary cache
     if (!std::filesystem::exists(binary_filepath)) {
         std::cout << "Generating Binary: " << binary_filepath << "...\n";
