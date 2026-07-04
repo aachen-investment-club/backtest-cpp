@@ -1,16 +1,16 @@
 #include "backtest-cpp/utils.h"
 
 #include <algorithm>
+#include <charconv>
 #include <cstdint>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <charconv>
 #include <system_error>
-#include <iomanip>
-#include <ctime>  
 
 std::string extractSymbolFromPath(const std::string& path) {
     return std::filesystem::path(path).stem().string();

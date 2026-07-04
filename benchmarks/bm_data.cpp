@@ -38,7 +38,7 @@ static void BM_DataHandler_LoadCSV(benchmark::State& state) {
     for (auto _ : state) {
         state.PauseTiming();
         symbol_dictionary symDict;
-        DataHandler handler(symDict);
+        DataHandler handler;
 
         state.ResumeTiming();
 
@@ -60,7 +60,7 @@ static void BM_DataHandler_GetNextBars(benchmark::State& state) {
     CreateDummyCSV(filepath, numRows);
 
     symbol_dictionary symDict;
-    DataHandler handler(symDict);
+    DataHandler handler;
     handler.loadCSV(filepath, 0, "nanoseconds");
 
     for (auto _ : state) {

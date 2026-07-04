@@ -1,9 +1,9 @@
 #include "backtest-cpp/portfolio.h"
 
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <vector>
-#include <cstdlib> 
 
 #include "backtest-cpp/types.h"
 
@@ -20,7 +20,7 @@ double Portfolio::getInvestedValue(const std::vector<Bar>& currentBars) const {
     double totalPositionValue = 0;
     for (const auto& [symbol_id, position] : positions_) {
         // std::cout << "CurrentBars.size() " << currentBars.size() << std::endl;
-        if (currentBars[symbol_id].symbol_id == 0) { // ids start from 1, so 0 means doesn't exist
+        if (currentBars[symbol_id].symbol_id == 0) {  // ids start from 1, so 0 means doesn't exist
             // Use last known price or throw error - don't just skip!
             std::cerr << "ERROR: Missing price for position " << symbol_id << std::endl;
             // throw std::runtime_error("Cannot calculate equity without price");
@@ -154,7 +154,7 @@ void Portfolio::executeOrder(const Order& order, const bool close = false) {
                                     .quantity = closedQuantity,
                                     .pnl = tradePnl,
                                     .commission = commission_});
-            // DEBUG    
+            // DEBUG
             // std::cout << "Logged Trade | " << "Closed: " << closedQuantity << " Entered @ "
             //           << pos.averagePrice << " Exited @ " << order.price << " P&L: " << tradePnl
             //           << std::endl;

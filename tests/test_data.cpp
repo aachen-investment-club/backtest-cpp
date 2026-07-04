@@ -6,7 +6,7 @@
 #include "backtest-cpp/data.h"
 #include "backtest-cpp/types.h"
 
-const uint32_t NQ_ID = 1;   // IDs start from 1
+const uint32_t NQ_ID = 1;  // IDs start from 1
 const uint32_t SECOND_ID = 2;
 
 // ============================================================================
@@ -20,10 +20,10 @@ class DataHandlerTest : public ::testing::Test {
     std::string testFilePath;
 
     void SetUp() override {
-        data = new DataHandler(symDict);
+        data = new DataHandler;
         testFilePath = "test_data_temp.csv";
-        symDict.get_id("NQ"); // NQ_ID = 1
-        symDict.get_id("SEC"); // SECOND_ID = 2
+        symDict.get_id("NQ");   // NQ_ID = 1
+        symDict.get_id("SEC");  // SECOND_ID = 2
     }
 
     void TearDown() override {

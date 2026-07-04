@@ -2,3 +2,4 @@
 |-------|-------|-------------------------|----------|-------------|-------------|------------|-----|
 |2026-06-09:18:28|./data/NQ_sample.csv|0.5359|0.48|0.25|3.40|21.95|Heavily unoptimized still, profiling looks good because cpu is essentially doing a lot of unnecessary work (string operations) really fast, Events/sec target is 50M (~100x)|
 |2026-06-19:18:32|./data/NQ_sample.csv|0.5452|0.29|0.25|3.39|20.91|Run with contiguous vector to store bars instead of map, significant expected reduction in L1d Miss % is present|
+|2026-07-03:23:33|./data/NQ_sample.csv|10.5596|2.88|0.43|3.06|12.34|New mmapped binary data gives enormous 18x performance gain in throughput. Memory footprint has also been almost halved. The other metrics are drastically worse from a % standpoint but in an absolute sense still very good imo.|

@@ -37,6 +37,7 @@ build.ninja
 *.exe
 *.out
 *.app
+*.bin
 
 *.dSYM/
 *.pdb
@@ -87,5 +88,4 @@ Thumbs.db
 .cache/
 *.log
 
-# data/*.csv
 TODO.txt
