@@ -6,6 +6,13 @@ FetchContent_Declare(
     SYSTEM
     FIND_PACKAGE_ARGS NAMES GTest
 )
+FetchContent_Declare(
+    csv_parser
+    URL https://vincentlaucsb.github.io/csv-parser/csv.hpp
+    DOWNLOAD_NO_EXTRACT TRUE
+    SYSTEM
+)
+FetchContent_MakeAvailable(csv_parser)
 
 block(SCOPE_FOR VARIABLES)
     set(gtest_force_shared_crt ON)

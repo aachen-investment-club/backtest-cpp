@@ -104,13 +104,18 @@ void DataHandler::loadCSV(const std::string& csv_filepath, uint32_t symbol_id,
     std::filesystem::path binary_path = binary_dir / data_path.filename();
     std::string binary_filepath = binary_path.replace_extension(".bin").string();
 
+    if (!std::filesystem::exists(binary_filepath) && !std::filesystem::exists(csv_filepath)) {
+        throw std::runtime_error(
+            "CSV file correspongding to cached binary exists. Consider clearing binary cache.");
+        return;
+    }
+
     // Check binary cache
     if (!std::filesystem::exists(binary_filepath)) {
         std::cout << "Generating Binary: " << binary_filepath << "...\n";
         makeBinary(csv_filepath, binary_filepath, symbol_id, mode);
     }
 
-    // Ensure matrix is big enough  - necessary? prolly no. Good for performance? tbd.
     if (instrumentData_.size() <= symbol_id) {
         instrumentData_.resize(symbol_id + 1);
     }
@@ -120,10 +125,11 @@ void DataHandler::loadCSV(const std::string& csv_filepath, uint32_t symbol_id,
     // TODO: make sure to add symbol of symbol_id to symDict before running with:
     // assign_and_save_id(symbol);
 
-    // Guarantee chronological ascending order for k-way merge. This should be a redundant
-    // just-in-case
-    std::sort(instrumentData_[symbol_id].begin(), instrumentData_[symbol_id].end(),
-              [](const Bar& a, const Bar& b) { return a.time < b.time; });
+    // Assert sorted chronological data in O(n)
+    assert(std::is_sorted(instrumentData_[symbol_id].begin(), instrumentData_[symbol_id].end(),
+                          [](const Bar& a, const Bar& b) { return a.time < b.time; }));
+
+    synchronizeData();
 }
 
 void DataHandler::loadAllCSVs(const std::string& directory, symbol_dictionary& symDict,

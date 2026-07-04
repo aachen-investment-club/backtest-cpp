@@ -25,7 +25,6 @@ cmake --build --preset release
 ## Test
 ```bash
 ctest --preset release
-# (CI includes running ctest and the backtest binary)
 ```
 
 ## Benchmark
