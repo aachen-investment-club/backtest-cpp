@@ -99,7 +99,10 @@ std::vector<Bar> DataHandler::mapBinary(const std::string& binary_filepath) {
 void DataHandler::loadCSV(const std::string& csv_filepath, uint32_t symbol_id,
                           const std::string_view mode) {
     std::filesystem::path data_path(csv_filepath);
-    std::string binary_filepath = data_path.replace_extension(".bin").string();
+
+    std::filesystem::path binary_dir = "./data/binary";
+    std::filesystem::path binary_path = binary_dir / data_path.filename();
+    std::string binary_filepath = binary_path.replace_extension(".bin").string();
 
     // Check binary cache
     if (!std::filesystem::exists(binary_filepath)) {
