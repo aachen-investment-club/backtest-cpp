@@ -25,7 +25,8 @@ double Portfolio::getInvestedValue(const std::vector<Bar>& currentBars) const {
             std::cerr << "ERROR: Missing price for position " << symbol_id << std::endl;
             throw std::runtime_error("Cannot calculate equity without price"); // TODO create a last available price vector
         }
-        totalPositionValue += currentBars.at(symbol_id).close * abs(position.quantity);
+        totalPositionValue += abs(position.quantity) * position.averagePrice
+                            + position.quantity * (currentBars.at(symbol_id).close - position.averagePrice);
     }
     return totalPositionValue;
 }
@@ -157,8 +158,8 @@ void Portfolio::executeOrder(const Order& order, const bool close) {
                                     .quantity = closedQuantity,
                                     .pnl = tradePnl,
                                     .commission = commission_});
+            availableCash_ += (abs(closedQuantity) * pos.averagePrice + tradePnl - commission_);
             // average price doesn't change
-            availableCash_ -= (-abs(order.quantity) * order.price + commission_);
             pos.quantity += order.quantity;
         }
         else if(abs(order.quantity) > abs(pos.quantity)) { // FLIP
@@ -168,9 +169,10 @@ void Portfolio::executeOrder(const Order& order, const bool close) {
                                     .quantity = closedQuantity,
                                     .pnl = tradePnl,
                                     .commission = commission_});
+            availableCash_ += (abs(closedQuantity) * pos.averagePrice + tradePnl - commission_);
+            availableCash_ -= (abs(pos.quantity + order.quantity) * order.price);
             pos.averagePrice = order.price;
-            availableCash_ -= (-abs(pos.quantity) * order.price + commission_);
-            availableCash_ -= (abs(pos.quantity - order.quantity) * order.price);
+            
             pos.quantity += order.quantity;
             
         }  
@@ -181,7 +183,7 @@ void Portfolio::executeOrder(const Order& order, const bool close) {
                                     .quantity = closedQuantity,
                                     .pnl = tradePnl,
                                     .commission = commission_});
-            availableCash_ -= (-abs(order.quantity) * order.price + commission_);
+            availableCash_ += (abs(closedQuantity) * pos.averagePrice + tradePnl - commission_);
             positions_.erase(order.symbol_id);
         }
     }
