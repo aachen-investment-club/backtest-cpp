@@ -50,5 +50,4 @@ struct Position {
     uint32_t symbol_id;
     int quantity;
     double averagePrice;
-    SignalType direction;
 };

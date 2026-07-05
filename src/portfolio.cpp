@@ -20,14 +20,15 @@ double Portfolio::getInvestedValue(const std::vector<Bar>& currentBars) const {
     double totalPositionValue = 0;
     for (const auto& [symbol_id, position] : positions_) {
         // std::cout << "CurrentBars.size() " << currentBars.size() << std::endl;
-        if (currentBars[symbol_id].symbol_id == 0) {  // ids start from 1, so 0 means doesn't exist
+        if (currentBars.at(symbol_id).symbol_id == 0) {  // ids start from 1, so 0 means doesn't exist
             // Use last known price or throw error - don't just skip!
             std::cerr << "ERROR: Missing price for position " << symbol_id << std::endl;
-            // throw std::runtime_error("Cannot calculate equity without price");
+            throw std::runtime_error("Cannot calculate equity without price"); // TODO create a last available price vector
         }
-        totalPositionValue += position.quantity * currentBars[symbol_id].close;
+        totalPositionValue += abs(position.quantity) * position.averagePrice
+                            + position.quantity * (currentBars.at(symbol_id).close - position.averagePrice);
     }
-    return fabs(totalPositionValue);
+    return totalPositionValue;
 }
 
 double Portfolio::getTotalEquity(const std::vector<Bar>& currentBars) const {
@@ -51,17 +52,17 @@ void Portfolio::closeAllPositions(const std::vector<Bar>& currentBars) {
         const Position& position = it->second;
 
         // Check if bar exists
-        if (currentBars[symbol_id].symbol_id == 0) {
+        if (currentBars.at(symbol_id).symbol_id == 0) {
             std::cerr << "WARNING: No price data for symbol " << symbol_id << std::endl;
-            //++it;
-            // continue;
+            ++it;
+            continue; // TODO create a last available price vector
         }
 
         // Build order using const references (no copies)
-        Order closeOrder{.time = currentBars[symbol_id].time,
+        Order closeOrder{.time = currentBars.at(symbol_id).time,
                          .symbol_id = symbol_id,
                          .direction = (position.quantity > 0) ? SignalType::SELL : SignalType::BUY,
-                         .price = currentBars[symbol_id].close,
+                         .price = currentBars.at(symbol_id).close,
                          .type = OrderType::MARKET,
                          .quantity = -position.quantity};
 
@@ -79,19 +80,22 @@ bool Portfolio::checkOverdraft(const Order& order) const {
     if (hasPosition) {
         const Position& pos = positions_.at(order.symbol_id);
         int netPositionSize = pos.quantity + order.quantity;
-
+        // if(pos.quantity * order.quantity < 0 && abs(pos.quantity) < abs(order.quantity)) { // checks if new order flips the position
+        //     return (abs(netPositionSize) * order.price + commission_ >
+        //         (availableCash_ * leverage_ + order.price * abs(pos.quantity) - commission_)); // account for double commision
+        // }
         return (abs(netPositionSize) * order.price + commission_ >
-                (availableCash_ * leverage_ + pos.averagePrice * abs(pos.quantity) - commission_));
+                (availableCash_ * leverage_ + order.price * abs(pos.quantity))); // TODO create a last available price vector and use it instead order.price
     } else {
         return (abs(order.quantity) * order.price + commission_) >
-               (availableCash_ * leverage_);  // NEEDS fixing for adjusting pos size
+               (availableCash_ * leverage_);
     }
 }
 
 double Portfolio::getRealizedPnL() const {
     double totalPnl = 0;
     for (const auto& trade : trades_) {
-        totalPnl += trade.pnl;
+        totalPnl += trade.pnl - trade.commission;
     }
     return totalPnl;
 }
@@ -106,7 +110,7 @@ double Portfolio::getUnrealizedPnL(const std::vector<Bar>& currentBars) const {
     return UnrealizedPnl;
 }
 
-void Portfolio::executeOrder(const Order& order, const bool close = false) {
+void Portfolio::executeOrder(const Order& order, const bool close) {
     auto posIt = positions_.find(order.symbol_id);
     bool hasPosition = (posIt != positions_.end());
 
@@ -120,61 +124,67 @@ void Portfolio::executeOrder(const Order& order, const bool close = false) {
         return;
     }
 
-    // NEW POSITION
-    if (!hasPosition) {
+    if (!hasPosition) { // OPEN
         positions_[order.symbol_id] = Position{
             .symbol_id = order.symbol_id,
             .quantity = order.quantity,
-            .averagePrice = order.price,
-            .direction = (order.quantity > 0) ? SignalType::BUY : SignalType::SELL,
+            .averagePrice = order.price
         };
-
-        double totalCost = fabs(order.quantity) * order.price + commission_;
+        trades_.push_back(Trade{.order = order,
+                                    .quantity = 0,
+                                    .pnl = 0,
+                                    .commission = commission_}); // add a trade to account for the commision while calculating Pnl
+        double totalCost = abs(order.quantity) * order.price + commission_;
         availableCash_ -= totalCost;
-
         // Adjust position
-    } else {
+    } 
+    else {
         Position& pos = positions_[order.symbol_id];
 
-        // Add to position
-        if ((order.direction == SignalType::BUY && pos.direction == SignalType::BUY) ||
-            (order.direction == SignalType::SELL && pos.direction == SignalType::SELL)) {
+        if((order.quantity > 0) ==  (pos.quantity > 0)) { // ADD
             pos.averagePrice = (pos.quantity * pos.averagePrice + order.quantity * order.price) /
                                static_cast<double>(pos.quantity + order.quantity);
-            availableCash_ -= (order.quantity * order.price + commission_);
-
-            // Remove from position
-        } else {
-            int netPositionSize = pos.quantity + order.quantity;
-
-            int closedQuantity =
-                abs(order.quantity) >= abs(pos.quantity) ? pos.quantity : order.quantity;
-            double tradePnl = closedQuantity * (order.price - pos.averagePrice) - commission_;
+            availableCash_ -= (abs(order.quantity) * order.price + commission_);
+            pos.quantity += order.quantity;
+            trades_.push_back(Trade{.order = order,
+                                    .quantity = 0,
+                                    .pnl = 0,
+                                    .commission = commission_}); // add a trade to account for the commision while calculating Pnl
+        }
+        else if(abs(order.quantity) < abs(pos.quantity)) { // REDUCE
+            int closedQuantity = -order.quantity;
+            double tradePnl = closedQuantity * (order.price - pos.averagePrice);
             trades_.push_back(Trade{.order = order,
                                     .quantity = closedQuantity,
                                     .pnl = tradePnl,
                                     .commission = commission_});
-            // DEBUG
-            // std::cout << "Logged Trade | " << "Closed: " << closedQuantity << " Entered @ "
-            //           << pos.averagePrice << " Exited @ " << order.price << " P&L: " << tradePnl
-            //           << std::endl;
-
-            availableCash_ += (abs(closedQuantity) * pos.averagePrice + tradePnl + commission_);
-
-            if (abs(order.quantity) > abs(pos.quantity)) {
-                availableCash_ -= (abs(pos.quantity + order.quantity) * order.price + commission_);
-            }
-
-            pos.quantity = netPositionSize;
-            pos.averagePrice =
-                abs(pos.quantity) > abs(order.quantity) ? pos.averagePrice : order.price;
-            pos.direction =
-                abs(pos.quantity) > abs(order.quantity) ? pos.direction : order.direction;
-
-            // Remove Empty Position
-            if (netPositionSize == 0) {
-                positions_.erase(order.symbol_id);
-            }
+            availableCash_ += (abs(closedQuantity) * pos.averagePrice + tradePnl - commission_);
+            // average price doesn't change
+            pos.quantity += order.quantity;
+        }
+        else if(abs(order.quantity) > abs(pos.quantity)) { // FLIP
+            int closedQuantity = pos.quantity;
+            double tradePnl = closedQuantity * (order.price - pos.averagePrice);
+            trades_.push_back(Trade{.order = order,
+                                    .quantity = closedQuantity,
+                                    .pnl = tradePnl,
+                                    .commission = commission_});
+            availableCash_ += (abs(closedQuantity) * pos.averagePrice + tradePnl - commission_);
+            availableCash_ -= (abs(pos.quantity + order.quantity) * order.price);
+            pos.averagePrice = order.price;
+            
+            pos.quantity += order.quantity;
+            
+        }  
+        else { // CLOSE
+            int closedQuantity = pos.quantity;
+            double tradePnl = closedQuantity * (order.price - pos.averagePrice);
+            trades_.push_back(Trade{.order = order,
+                                    .quantity = closedQuantity,
+                                    .pnl = tradePnl,
+                                    .commission = commission_});
+            availableCash_ += (abs(closedQuantity) * pos.averagePrice + tradePnl - commission_);
+            positions_.erase(order.symbol_id);
         }
     }
 

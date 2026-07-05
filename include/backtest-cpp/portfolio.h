@@ -27,7 +27,7 @@ class Portfolio {
     std::vector<Trade> getAllTrades() const;
     double getAvailableCash() const;
     void closeAllPositions(const std::vector<Bar>& currentBars);
-    void executeOrder(const Order& order, const bool close);
+    void executeOrder(const Order& order, const bool close = false);
 
    private:
     double availableCash_ = 10000;

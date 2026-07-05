@@ -58,7 +58,7 @@ The goal of this project is to build this rather standard backtester into a low-
 (!) = High-Impact Optimization
 
 ### Phase 1: Quick Wins (Cache & Parsing)
-- [IN PROGRESS] Refactor commission logic
+- [X] Refactor commission logic
 - [X] (!) **Symbol Interning:** Replace `std::string` instrument keys with `uint32_t` IDs or Enums to remove string comparisons and allocations.
 - [X] (!) **Contiguous Data Structures:** Replace `std::map<std::string, Bar>` with `std::vector<Bar>` indexed by Instrument ID to eliminate cache misses from pointer chasing.
 - [X] **High-Precision Time:** Replace `time_t` (seconds) with `std::chrono::nanoseconds` or `int64_t` (nanoseconds since epoch).
