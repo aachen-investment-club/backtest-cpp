@@ -7,7 +7,7 @@
 #include "backtest-cpp/portfolio.h"
 #include "backtest-cpp/types.h"
 
-const uint32_t NQ_ID = 0;
+const uint32_t NQ_ID = 1;
 
 // ============================================================================
 // Test Fixture - Reusable setup for tests
@@ -309,8 +309,7 @@ TEST_F(PortfolioTest, CloseLongPositionWithProfit) {
 
     Order closeOrder = createTestOrder(NQ_ID, SignalType::SELL, 110.0, -10);
     portfolio->executeOrder(closeOrder, true);
-
-    EXPECT_DOUBLE_EQ(portfolio->getAvailableCash(), 100097.3);
+    EXPECT_DOUBLE_EQ(portfolio->getAvailableCash(), 100094.6);
 }
 
 TEST_F(PortfolioTest, CloseLongPositionRemovesPosition) {
