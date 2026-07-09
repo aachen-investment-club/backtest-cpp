@@ -2,10 +2,10 @@
 #include <cstdint>
 #include <ctime>
 #include <string>
-#include <math.h>
+#include <cmath>
 
 constexpr int64_t PRICE_PRECISION = 10000; // 10^n means n decimal digits for precision
-inline int64_t priceDoubleToInt(double price) {
+inline int64_t priceDoubleToInt(double price) { 
     return std::llround(price * PRICE_PRECISION);
 }
 inline double priceIntToDouble(int64_t price) {
