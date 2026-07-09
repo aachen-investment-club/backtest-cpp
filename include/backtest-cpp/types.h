@@ -2,6 +2,15 @@
 #include <cstdint>
 #include <ctime>
 #include <string>
+#include <math.h>
+
+constexpr int64_t PRICE_PRECISION = 10000; // 10^n means n decimal digits for precision
+inline int64_t priceDoubleToInt(double price) {
+    return std::llround(price * PRICE_PRECISION);
+}
+inline double priceIntToDouble(int64_t price) {
+    return static_cast<double>(price) / PRICE_PRECISION;
+}
 
 enum class SignalType { BUY, SELL, HOLD };
 
@@ -17,10 +26,10 @@ enum class EventType {
 struct Bar {
     uint32_t symbol_id;
     int64_t time;
-    double open;
-    double high;
-    double low;
-    double close;
+    int64_t open;
+    int64_t high;
+    int64_t low;
+    int64_t close;
     long volume;
 };
 
@@ -34,7 +43,7 @@ struct Order {
     int64_t time;
     uint32_t symbol_id;
     SignalType direction;
-    double price;
+    int64_t price;
     OrderType type;
     int quantity;
 };
@@ -42,12 +51,12 @@ struct Order {
 struct Trade {
     Order order;
     int quantity;
-    double pnl;
-    double commission;
+    int64_t pnl;
+    int64_t commission;
 };
 
 struct Position {
     uint32_t symbol_id;
     int quantity;
-    double averagePrice;
+    int64_t averagePrice;
 };

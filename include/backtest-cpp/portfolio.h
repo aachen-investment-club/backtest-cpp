@@ -18,21 +18,21 @@ class Portfolio {
     Portfolio(const PortfolioConfig& config);
 
     std::map<std::uint32_t, Position>& getCurrentPositions();
-    double getInvestedValue(const std::vector<Bar>& currentBars) const;
-    double getTotalEquity(const std::vector<Bar>& currentBar) const;
-    double getRealizedPnL() const;
-    double getUnrealizedPnL(const std::vector<Bar>& currentBars) const;
+    int64_t getInvestedValue(const std::vector<Bar>& currentBars) const;
+    int64_t getTotalEquity(const std::vector<Bar>& currentBar) const;
+    int64_t getRealizedPnL() const;
+    int64_t getUnrealizedPnL(const std::vector<Bar>& currentBars) const;
     bool checkOverdraft(const Order& order) const;
     std::vector<Order> getAllOrders(int64_t fromTime) const;
     std::vector<Trade> getAllTrades() const;
-    double getAvailableCash() const;
+    int64_t getAvailableCash() const;
     void closeAllPositions(const std::vector<Bar>& currentBars);
     void executeOrder(const Order& order, const bool close = false);
 
    private:
-    double availableCash_ = 10000;
+    int64_t availableCash_ = 10000;
     const double leverage_ = 1;
-    const double commission_ = 2.70;
+    const int64_t commission_ = priceDoubleToInt(2.70);
 
     std::map<std::uint32_t, Position> positions_;  // Open Positions
     std::vector<Order> orders_;                    // Open Orders

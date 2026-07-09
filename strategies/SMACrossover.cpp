@@ -8,7 +8,6 @@
 #include <string>
 
 #include "backtest-cpp/types.h"
-
 SMACrossover::SMACrossover(uint32_t sym_id, int shortPeriod, int longPeriod)
     : symbol_id(sym_id), shortPeriod_(shortPeriod), longPeriod_(longPeriod) {
     if (shortPeriod >= longPeriod) {
@@ -28,7 +27,7 @@ void SMACrossover::onInit(const std::vector<std::vector<Bar>>& availableData) {
     double longSum = 0.0;
 
     for (size_t i = n - static_cast<size_t>(longPeriod_); i < n; i++) {
-        double closePrice = availableData[i].at(symbol_id).close;
+        double closePrice = priceIntToDouble(availableData[i].at(symbol_id).close);
 
         longWindow_.push_back(closePrice);
         longSum += closePrice;
@@ -57,7 +56,7 @@ std::map<uint32_t, std::optional<Signal>> SMACrossover::onBars(std::vector<Bar>&
 
     for (const auto& bar : bars) {
         if (bar.symbol_id != this->symbol_id) continue;
-        double newPrice = bar.close;
+        double newPrice = priceIntToDouble(bar.close);
 
         // Indicator update Logic
         prevShortMA_ = shortMA_;
@@ -101,7 +100,7 @@ Order SMACrossover::generateOrder(const Signal& signal, const Bar& currentBar,
     int current_position = (it != positions.end()) ? it->second.quantity : 0;
 
     // Calculate target position size
-    int target_size = static_cast<int>(std::floor(maxInvest / currentBar.open));
+    int target_size = static_cast<int>(std::floor(maxInvest / priceIntToDouble(currentBar.open)));
 
     int quantity = 0;
 
@@ -133,7 +132,7 @@ std::map<uint32_t, Order> SMACrossover::generateOrders(const std::map<uint32_t, 
 
         // Calculate target position size
         int target_size =
-            static_cast<int>(std::floor(maxInvest / currentBars.at(sig_symbol_id).open));
+            static_cast<int>(std::floor(maxInvest / priceIntToDouble(currentBars.at(sig_symbol_id).open)));
 
         int quantity = 0;
 
