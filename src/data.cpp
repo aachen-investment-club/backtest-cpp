@@ -39,10 +39,10 @@ void DataHandler::makeBinary(const std::string& csv_filepath, const std::string&
                 "format (1609459200000000000LL)");
         }
 
-        bar.open = row["open"].get<double>();
-        bar.high = row["high"].get<double>();
-        bar.low = row["low"].get<double>();
-        bar.close = row["close"].get<double>();
+        bar.open = priceDoubleToInt(row["open"].get<double>());
+        bar.high = priceDoubleToInt(row["high"].get<double>());
+        bar.low = priceDoubleToInt(row["low"].get<double>());
+        bar.close = priceDoubleToInt(row["close"].get<double>());
         bar.volume = row["volume"].get<int32_t>();
 
         bars.push_back(bar);

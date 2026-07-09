@@ -5,14 +5,14 @@
 #include <vector>
 
 #include "backtest-cpp/performance.h"
-
+#include "backtest-cpp/types.h"
 // Helper function to create a simple equity curve
 std::vector<EquityPoint> makeCurve(const std::vector<double>& equities, int64_t startTime = 0,
                                    int step = 60) {
     std::vector<EquityPoint> curve;
     int64_t t = startTime;
     for (double e : equities) {
-        curve.push_back({t, e});
+        curve.push_back({t, priceDoubleToInt(e)});
         t += step;
     }
     return curve;

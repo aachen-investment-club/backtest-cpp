@@ -84,12 +84,12 @@ int main() {
                 if (DEBUG) {
                     std::cout << "Order at bar " << barCount << ": "
                               << (signal->type == SignalType::BUY ? "BUY " : "SELL ")
-                              << order.quantity << " @ " << bars[symbol].close << std::endl;
+                              << order.quantity << " @ " << priceIntToDouble(bars[symbol].close) << std::endl;
 
-                    std::cout << "INFO | Unrealized PnL : " << portfolio.getUnrealizedPnL(bars)
-                              << " | Realized PnL : " << portfolio.getRealizedPnL() << std::endl;
+                    std::cout << "INFO | Unrealized PnL : " << priceIntToDouble(portfolio.getUnrealizedPnL(bars))
+                              << " | Realized PnL : " << priceIntToDouble(portfolio.getRealizedPnL()) << std::endl;
 
-                    std::cout << "INFO | Total Equity Before: " << portfolio.getTotalEquity(bars)
+                    std::cout << "INFO | Total Equity Before: " << priceIntToDouble(portfolio.getTotalEquity(bars))
                               << std::endl;
                 }
 
@@ -97,9 +97,9 @@ int main() {
 
                 if (DEBUG) {
                     std::cout << "INFO | Total Equity After: " << std::setprecision(7)
-                              << portfolio.getTotalEquity(bars) << std::endl;
+                              << priceIntToDouble(portfolio.getTotalEquity(bars) ) << std::endl;
 
-                    std::cout << "DEBUG: equity: " << portfolio.getTotalEquity(bars) << std::endl;
+                    std::cout << "DEBUG: equity: " << priceIntToDouble(portfolio.getTotalEquity(bars) ) << std::endl;
 
                     auto it = portfolio.getCurrentPositions().find(nq_id);
                     std::cout << "INFO | Total Positions After: "
@@ -149,8 +149,8 @@ int main() {
     std::cout << "\n=== Backtest Complete ===" << std::endl;
     std::cout << "Bars processed : " << barCount << std::endl;
     std::cout << "Trades         : " << portfolio.getAllTrades().size() << std::endl;
-    std::cout << "Realized PnL   : " << portfolio.getRealizedPnL() << std::endl;
-    std::cout << "Final Equity   : " << portfolio.getTotalEquity(finalBars) << std::endl;
+    std::cout << "Realized PnL   : " << priceIntToDouble(portfolio.getRealizedPnL() ) << std::endl;
+    std::cout << "Final Equity   : " << priceIntToDouble(portfolio.getTotalEquity(finalBars) ) << std::endl;
 
     std::cout << "\n=== Strategy Performance Statistics ===" << std::endl;
 

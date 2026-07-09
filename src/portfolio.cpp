@@ -8,16 +8,16 @@
 #include "backtest-cpp/types.h"
 
 Portfolio::Portfolio(const PortfolioConfig& config)
-    : availableCash_(config.initialCash),
+    : availableCash_(priceDoubleToInt(config.initialCash)),
       leverage_(config.leverage),
-      commission_(config.commission) {}
+      commission_(priceDoubleToInt(config.commission)) {}
 
 std::map<std::uint32_t, Position>& Portfolio::getCurrentPositions() {
     return positions_;
 };
 
-double Portfolio::getInvestedValue(const std::vector<Bar>& currentBars) const {
-    double totalPositionValue = 0;
+int64_t Portfolio::getInvestedValue(const std::vector<Bar>& currentBars) const {
+    int64_t totalPositionValue = 0;
     for (const auto& [symbol_id, position] : positions_) {
         // std::cout << "CurrentBars.size() " << currentBars.size() << std::endl;
         if (currentBars.at(symbol_id).symbol_id == 0) {  // ids start from 1, so 0 means doesn't exist
@@ -31,7 +31,7 @@ double Portfolio::getInvestedValue(const std::vector<Bar>& currentBars) const {
     return totalPositionValue;
 }
 
-double Portfolio::getTotalEquity(const std::vector<Bar>& currentBars) const {
+int64_t Portfolio::getTotalEquity(const std::vector<Bar>& currentBars) const {
     return getInvestedValue(currentBars) + availableCash_;
 };
 
@@ -84,24 +84,24 @@ bool Portfolio::checkOverdraft(const Order& order) const {
         //     return (abs(netPositionSize) * order.price + commission_ >
         //         (availableCash_ * leverage_ + order.price * abs(pos.quantity) - commission_)); // account for double commision
         // }
-        return (abs(netPositionSize) * order.price + commission_ >
-                (availableCash_ * leverage_ + order.price * abs(pos.quantity))); // TODO create a last available price vector and use it instead order.price
+        return (static_cast<double>(abs(netPositionSize) * order.price + commission_) >
+                (static_cast<double>(availableCash_) * leverage_ + static_cast<double>(order.price * abs(pos.quantity)) ) ); // TODO create a last available price vector and use it instead order.price
     } else {
-        return (abs(order.quantity) * order.price + commission_) >
-               (availableCash_ * leverage_);
+        return static_cast<double>(abs(order.quantity) * order.price + commission_) >
+               (static_cast<double>(availableCash_) * leverage_);
     }
 }
 
-double Portfolio::getRealizedPnL() const {
-    double totalPnl = 0;
+int64_t Portfolio::getRealizedPnL() const {
+    int64_t totalPnl = 0;
     for (const auto& trade : trades_) {
         totalPnl += trade.pnl - trade.commission;
     }
     return totalPnl;
 }
 
-double Portfolio::getUnrealizedPnL(const std::vector<Bar>& currentBars) const {
-    double UnrealizedPnl = 0;
+int64_t Portfolio::getUnrealizedPnL(const std::vector<Bar>& currentBars) const {
+    int64_t UnrealizedPnl = 0;
     for (const auto& [symbol_id, position] : positions_) {
         UnrealizedPnl +=
             position.quantity * (currentBars.at(symbol_id).close - position.averagePrice) -
@@ -134,7 +134,7 @@ void Portfolio::executeOrder(const Order& order, const bool close) {
                                     .quantity = 0,
                                     .pnl = 0,
                                     .commission = commission_}); // add a trade to account for the commision while calculating Pnl
-        double totalCost = abs(order.quantity) * order.price + commission_;
+        int64_t totalCost = abs(order.quantity) * order.price + commission_;
         availableCash_ -= totalCost;
         // Adjust position
     } 
@@ -143,7 +143,7 @@ void Portfolio::executeOrder(const Order& order, const bool close) {
 
         if((order.quantity > 0) ==  (pos.quantity > 0)) { // ADD
             pos.averagePrice = (pos.quantity * pos.averagePrice + order.quantity * order.price) /
-                               static_cast<double>(pos.quantity + order.quantity);
+                               (pos.quantity + order.quantity);
             availableCash_ -= (abs(order.quantity) * order.price + commission_);
             pos.quantity += order.quantity;
             trades_.push_back(Trade{.order = order,
@@ -153,7 +153,7 @@ void Portfolio::executeOrder(const Order& order, const bool close) {
         }
         else if(abs(order.quantity) < abs(pos.quantity)) { // REDUCE
             int closedQuantity = -order.quantity;
-            double tradePnl = closedQuantity * (order.price - pos.averagePrice);
+            int64_t tradePnl = closedQuantity * (order.price - pos.averagePrice);
             trades_.push_back(Trade{.order = order,
                                     .quantity = closedQuantity,
                                     .pnl = tradePnl,
@@ -164,7 +164,7 @@ void Portfolio::executeOrder(const Order& order, const bool close) {
         }
         else if(abs(order.quantity) > abs(pos.quantity)) { // FLIP
             int closedQuantity = pos.quantity;
-            double tradePnl = closedQuantity * (order.price - pos.averagePrice);
+            int64_t tradePnl = closedQuantity * (order.price - pos.averagePrice);
             trades_.push_back(Trade{.order = order,
                                     .quantity = closedQuantity,
                                     .pnl = tradePnl,
@@ -178,7 +178,7 @@ void Portfolio::executeOrder(const Order& order, const bool close) {
         }  
         else { // CLOSE
             int closedQuantity = pos.quantity;
-            double tradePnl = closedQuantity * (order.price - pos.averagePrice);
+            int64_t tradePnl = closedQuantity * (order.price - pos.averagePrice);
             trades_.push_back(Trade{.order = order,
                                     .quantity = closedQuantity,
                                     .pnl = tradePnl,
@@ -195,6 +195,6 @@ std::vector<Trade> Portfolio::getAllTrades() const {
     return trades_;
 }
 
-double Portfolio::getAvailableCash() const {
+int64_t Portfolio::getAvailableCash() const {
     return availableCash_;
 }

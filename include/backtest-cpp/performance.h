@@ -6,7 +6,7 @@
 
 struct EquityPoint {
     int64_t time;
-    double equity;
+    int64_t equity;
 };
 
 enum class Frequency { DAILY, MINUTE, HOURLY };

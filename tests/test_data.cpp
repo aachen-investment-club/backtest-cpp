@@ -6,7 +6,6 @@
 
 #include "backtest-cpp/data.h"
 #include "backtest-cpp/types.h"
-
 const uint32_t NQ_ID = 1;  // IDs start from 1
 const uint32_t SECOND_ID = 2;
 
@@ -82,10 +81,10 @@ TEST_F(DataHandlerTest, LoadCSVSetsCorrectValues) {
     data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     Bar bar = data->getNextBars()[NQ_ID];
     EXPECT_EQ(bar.symbol_id, NQ_ID);
-    EXPECT_DOUBLE_EQ(bar.open, 3700.0);
-    EXPECT_DOUBLE_EQ(bar.high, 3710.0);
-    EXPECT_DOUBLE_EQ(bar.low, 3690.0);
-    EXPECT_DOUBLE_EQ(bar.close, 3705.0);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(bar.open), 3700.0);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(bar.high), 3710.0);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(bar.low), 3690.0);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(bar.close), 3705.0);
     EXPECT_EQ(bar.volume, 100000);
 }
 
@@ -114,9 +113,9 @@ TEST_F(DataHandlerTest, GetNextBarReturnsSequentially) {
     Bar bar1 = data->getNextBars()[NQ_ID];
     Bar bar2 = data->getNextBars()[NQ_ID];
     Bar bar3 = data->getNextBars()[NQ_ID];
-    EXPECT_DOUBLE_EQ(bar1.close, 3705.0);
-    EXPECT_DOUBLE_EQ(bar2.close, 3706.0);
-    EXPECT_DOUBLE_EQ(bar3.close, 3707.0);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(bar1.close), 3705.0);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(bar2.close), 3706.0);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(bar3.close), 3707.0);
 }
 
 TEST_F(DataHandlerTest, GetNextBarAdvancesIndex) {
@@ -149,8 +148,8 @@ TEST_F(DataHandlerTest, GetCurrentBarAfterGetNext) {
     data->loadCSV(testFilePath, NQ_ID, "nanosecond");
     Bar next = data->getNextBars().at(NQ_ID);
     Bar current = data->getCurrentBars().at(NQ_ID);
-    EXPECT_DOUBLE_EQ(next.close, current.close);
-    EXPECT_DOUBLE_EQ(current.close, 3705.0);
+    EXPECT_EQ(next.close, current.close);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(current.close), 3705.0);
 }
 
 TEST_F(DataHandlerTest, GetCurrentBarDoesNotAdvanceIndex) {
@@ -160,8 +159,8 @@ TEST_F(DataHandlerTest, GetCurrentBarDoesNotAdvanceIndex) {
     Bar current1 = data->getCurrentBars()[NQ_ID];
     Bar current2 = data->getCurrentBars()[NQ_ID];
     Bar current3 = data->getCurrentBars()[NQ_ID];
-    EXPECT_DOUBLE_EQ(current1.close, current2.close);
-    EXPECT_DOUBLE_EQ(current2.close, current3.close);
+    EXPECT_EQ(current1.close, current2.close);
+    EXPECT_EQ(current2.close, current3.close);
 }
 
 TEST_F(DataHandlerTest, GetCurrentBarOnEmptyDataHandlesGracefully) {
@@ -205,7 +204,7 @@ TEST_F(DataHandlerTest, ResetRestartsFromBeginning) {
     static_cast<void>(data->getNextBars().at(NQ_ID));
     data->reset();
     Bar firstBarAgain = data->getNextBars().at(NQ_ID);
-    EXPECT_DOUBLE_EQ(firstBar.close, firstBarAgain.close);
+    EXPECT_EQ(firstBar.close, firstBarAgain.close);
 }
 
 TEST_F(DataHandlerTest, SizeReturnsCorrectCount) {
@@ -234,7 +233,7 @@ TEST_F(DataHandlerTest, CompleteWorkflow) {
     EXPECT_TRUE(data->hasMoreData());
     data->reset();
     Bar firstBar = data->getNextBars().at(NQ_ID);
-    EXPECT_DOUBLE_EQ(firstBar.close, 3705.0);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(firstBar.close), 3705.0);
 }
 
 TEST_F(DataHandlerTest, LoadMultipleFiles) {

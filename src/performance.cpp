@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <stdexcept>
+#include "backtest-cpp/types.h"
 
 Annualization Performance::getAnnualization(Frequency freq) {  // TODO: make instrument specific
     switch (freq) {
@@ -19,8 +20,8 @@ Annualization Performance::getAnnualization(Frequency freq) {  // TODO: make ins
 double Performance::annualizedReturn(const std::vector<EquityPoint>& curve, Frequency freq) {
     if (curve.size() < 2) throw std::runtime_error("Equity curve too short");
 
-    double start = curve.front().equity;
-    double end = curve.back().equity;
+    double start =  priceIntToDouble(curve.front().equity);
+    double end = priceIntToDouble(curve.back().equity);
 
     double periods = static_cast<double>(curve.size() - 1);
     double annualPeriods = getAnnualization(freq).periodsPerYear;
@@ -35,7 +36,7 @@ double Performance::annualizedVolatility(const std::vector<EquityPoint>& curve, 
     returns.reserve(curve.size() - 1);
 
     for (size_t i = 1; i < curve.size(); ++i) {
-        returns.push_back(std::log(curve[i].equity / curve[i - 1].equity));
+        returns.push_back(std::log(priceIntToDouble(curve[i].equity) / priceIntToDouble(curve[i - 1].equity)));
     }
 
     double mean = 0.0;
