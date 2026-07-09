@@ -126,7 +126,7 @@ TEST_F(PortfolioTest, ZeroQuantityOrderShouldNotOverdraft) {
     Order order;
     order.symbol_id = NQ_ID;
     order.time = std::time(nullptr);
-    order.price = 1000000.0;  // Huge price
+    order.price = priceDoubleToInt(1000000.0);  // Huge price
     order.direction = SignalType::BUY;
     order.quantity = 0;  // But zero quantity
     order.type = OrderType::MARKET;
@@ -138,7 +138,7 @@ TEST_F(PortfolioTest, NegativeQuantityHandling) {
     Order order;
     order.symbol_id = NQ_ID;
     order.time = std::time(nullptr);
-    order.price = 100.0;
+    order.price = priceDoubleToInt(100.0);
     order.direction = SignalType::SELL;
     order.quantity = -10;  // Negative
     order.type = OrderType::MARKET;
