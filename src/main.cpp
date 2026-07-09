@@ -84,12 +84,12 @@ int main() {
                 if (DEBUG) {
                     std::cout << "Order at bar " << barCount << ": "
                               << (signal->type == SignalType::BUY ? "BUY " : "SELL ")
-                              << order.quantity << " @ " << bars[symbol].close << std::endl;
+                              << order.quantity << " @ " << priceIntToDouble(bars[symbol].close) << std::endl;
 
-                    std::cout << "INFO | Unrealized PnL : " << portfolio.getUnrealizedPnL(bars)
-                              << " | Realized PnL : " << portfolio.getRealizedPnL() << std::endl;
+                    std::cout << "INFO | Unrealized PnL : " << priceIntToDouble(portfolio.getUnrealizedPnL(bars))
+                              << " | Realized PnL : " << priceIntToDouble(portfolio.getRealizedPnL()) << std::endl;
 
-                    std::cout << "INFO | Total Equity Before: " << portfolio.getTotalEquity(bars)
+                    std::cout << "INFO | Total Equity Before: " << priceIntToDouble(portfolio.getTotalEquity(bars))
                               << std::endl;
                 }
 
