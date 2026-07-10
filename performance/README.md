@@ -43,7 +43,7 @@ perf report
 ```
 # Inside FlameGraph Repository
 # Current out.perf run inside the FlameGraph directory
-2034  perf script > out.perf
-2035  ./stackcollapse-perf.pl out.perf > out.folded
-2036  ./flamegraph.pl out.folded > flame.svg
+perf script > out.perf
+./stackcollapse-perf.pl out.perf > out.folded
+./flamegraph.pl out.folded > flame.svg
 ```
