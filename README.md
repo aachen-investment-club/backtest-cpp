@@ -63,7 +63,7 @@ The goal of this project is to build this rather standard backtester into a low-
 - [X] (!) **Contiguous Data Structures:** Replace `std::map<std::string, Bar>` with `std::vector<Bar>` indexed by Instrument ID to eliminate cache misses from pointer chasing.
 - [X] **High-Precision Time:** Replace `time_t` (seconds) with `std::chrono::nanoseconds` or `int64_t` (nanoseconds since epoch).
 - [ ] (!) **Cache-Line Alignment & Padding:** Align `Bar` and `Position` structs to 64-byte boundaries (`alignas(64)`) to optimize CPU L1 cache fetch and prevent false sharing.
-- [ ] (!) **Fixed-Point Math:** Replace `double` for prices with `int64_t` fixed-point arithmetic (e.g., price * 10,000) to ensure deterministic logic and faster comparisons.
+- [X] (!) **Fixed-Point Math:** Replace `double` for prices with `int64_t` fixed-point arithmetic (e.g., price * 10,000) to ensure deterministic logic and faster comparisons.
 
 ### Phase 2: Binary Data Mapping
 - [X] (!) **Memory Mapped I/O (`mmap`):** Map data files directly into process memory instead of performing user-space I/O copies.
