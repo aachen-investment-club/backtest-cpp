@@ -37,4 +37,13 @@ Thus, for maximum performance, we want to keep the Branch miss % as low as possi
 taskset -c 2 perf record --call-graph dwarf ./build/release/src/backtest
 perf report
 ```
-(Core 2 is a performance (4.8Ghz) cpu on benchmark machine)
+(Core 2 is a performance (4.8Ghz) cpu on benchmark machine)  
+
+## FLamegraph (using FlameGraph repository)
+```
+# Inside FlameGraph Repository
+# Current out.perf run inside the FlameGraph directory
+2034  perf script > out.perf
+2035  ./stackcollapse-perf.pl out.perf > out.folded
+2036  ./flamegraph.pl out.folded > flame.svg
+```
