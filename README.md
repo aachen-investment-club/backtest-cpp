@@ -37,7 +37,9 @@ Benchmarks are built automatically alongside the project. Always run benchmarks 
 ## Performance
 Run and profile the code via the analysis tool (currently linux only):
 ```bash
-./build/release/performance/analyze
+sudo cpupower frequency-set -g performance
+sudo cpupower frequency-set -d 4.8GHz -u 4.8GHz  
+taskset -c 2 ./build/release/performance/analyze
 ```  
 
 The results and comparisons are written to the performance table in:
@@ -72,7 +74,7 @@ The goal of this project is to build this rather standard backtester into a low-
 - [ ] **Custom Memory Pool:** Implement `std::pmr::memory_resource` for any unavoidable dynamic allocations during execution.
 
 ### Phase 3: Advanced Systems & LOB (Complex Features)
-- [ ] **CPU Pinning / Thread Affinity:** Isolate the backtest thread to a specific CPU core to prevent context switching.
+- [X] **CPU Pinning / Thread Affinity:** Isolate the backtest thread to a specific CPU core to prevent context switching.
 - [ ] **Structure of Arrays (SoA):** Refactor data layouts (e.g., separating Open, High, Low, Close arrays) to maximize SIMD vectorization for indicator math.
 - [ ] **L2 Limit Order Book (LOB):** Move beyond OHLC bars to full tick-data and order book reconstruction.
 - [ ] **Latency Modeling:** Introduce simulated network delay (nanoseconds) between signal generation and order execution.
