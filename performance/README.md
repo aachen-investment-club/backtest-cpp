@@ -18,13 +18,23 @@ CPU(s):                      22
     Stepping:                4
     CPU max MHz:             4800.0000
 ```
+
+## Benchmarking approach
+The backtest run over the same sample strategy and dataset is repeated N times (default 20) and also a few discarded warmup runs. 
+The execution is pinned to a performance core (Core 2 with 4.8GHz max) and the CPU governor is set to performance.
+The performance script is ran via
+```bash
+sudo cpupower frequency-set -g performance
+sudo cpupower frequency-set -d 4.8GHz -u 4.8GHz  
+taskset -c 2 ./build/release/performance/analyze
+```  
   
 ## Metrics tracked
 ### Metadata
 * Date
 * Dataset
 
-### Performance
+### Performance Metrics
 * Throughput: Measured in million events / second. This is THE MAIN METRIC we optimize for, we want our backtester to process as many events as fast as possible, making maximum use of the hardware.
 * L1d miss %: Level 1 data cache misses. We want this to be as low as possible so the cpu can efficiently work with the available data.
 * Branch miss %: How well can the CPU predict what branch will be executed next? A false prediction causes a costly pipeline stall. 
@@ -37,7 +47,6 @@ Thus, for maximum performance, we want to keep the Branch miss % as low as possi
 taskset -c 2 perf record --call-graph dwarf ./build/release/src/backtest
 perf report
 ```
-(Core 2 is a performance (4.8Ghz) cpu on benchmark machine)  
 
 ## FLamegraph (using FlameGraph repository)
 ```

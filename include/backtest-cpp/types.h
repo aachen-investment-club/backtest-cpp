@@ -60,3 +60,11 @@ struct Position {
     int quantity;
     int64_t averagePrice;
 };
+
+struct PerformanceRunResult {
+    double throughput = 0.0;
+    double l1_miss_pct = 0.0;
+    double branch_miss_pct = 0.0;
+    double ipc = 0.0;
+    double max_rss = 0.0;
+};
