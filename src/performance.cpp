@@ -32,23 +32,21 @@ double Performance::annualizedReturn(const std::vector<EquityPoint>& curve, Freq
 double Performance::annualizedVolatility(const std::vector<EquityPoint>& curve, Frequency freq) {
     if (curve.size() < 3) throw std::runtime_error("Equity curve too short");
 
-    std::vector<double> returns;
-    returns.reserve(curve.size() - 1);
+    const size_t n = curve.size() - 1;
+    double sum = 0.0, sumSq = 0.0;
 
     for (size_t i = 1; i < curve.size(); ++i) {
-        returns.push_back(std::log(priceIntToDouble(curve[i].equity) / priceIntToDouble(curve[i - 1].equity)));
+        double r = std::log(priceIntToDouble(curve[i].equity) /
+                            priceIntToDouble(curve[i - 1].equity));
+        sum += r;
+        sumSq += r * r;
     }
 
-    double mean = 0.0;
-    for (double r : returns) mean += r;
-    mean /= static_cast<double>(returns.size());
+    double mean = sum / static_cast<double>(n);
+    double var = (sumSq - static_cast<double>(n) * mean * mean) /
+                 static_cast<double>(n - 1);
 
-    double var = 0.0;
-    for (double r : returns) var += (r - mean) * (r - mean);
-    var /= static_cast<double>(returns.size() - 1);
-
-    double annualPeriods = getAnnualization(freq).periodsPerYear;
-    return std::sqrt(var * annualPeriods);
+    return std::sqrt(var * getAnnualization(freq).periodsPerYear);
 }
 
 double Performance::sharpeRatio(const std::vector<EquityPoint>& curve, Frequency freq,
