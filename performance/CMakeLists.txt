@@ -6,3 +6,5 @@ target_link_libraries(analyze PRIVATE BacktestCpp::Warnings)
 target_include_directories(analyze PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
+
+target_compile_features(analyze PRIVATE cxx_std_20)
