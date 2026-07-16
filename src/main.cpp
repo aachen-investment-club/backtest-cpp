@@ -60,6 +60,8 @@ int main() {
     std::vector<EquityPoint> equityCurve;
     equityCurve.reserve(100000);  // avoid reallocations
 
+    std::deque<Order> openOrders;
+
     int barCount = 0;
 
     // -------------------------------------------------
@@ -74,32 +76,51 @@ int main() {
                       << std::endl;
         }
 
+        // Execute open orders
+        for (Order &order : openOrders) {
+            for (const auto &bar : bars) {
+                if (bar.symbol_id == order.symbol_id) {
+                    order.price = bar.open;
+                    portfolio.executeOrder(order, true);
+                    break;
+                }
+            }
+        }
+        openOrders.clear();
+
         std::map<uint32_t, std::optional<Signal>> signalMap =
             strategy.onBars(bars, portfolio.getCurrentPositions());
 
         for (const auto &[symbol, signal] : signalMap) {
             if (signal.has_value()) {
-                Order order = strategy.generateOrder(signal.value(), bars[symbol], 10'000,
-                                                     portfolio.getCurrentPositions());
+                // Order order = strategy.generateOrder(signal.value(), bars[symbol], 10'000,
+                //                                      portfolio.getCurrentPositions());
+
+                openOrders.emplace_back(strategy.generateOrder(
+                    signal.value(), bars[symbol], 10'000,
+                    portfolio.getCurrentPositions()));  // Using rvalue like a real nigga
+
                 if (DEBUG) {
                     std::cout << "Order at bar " << barCount << ": "
-                              << (signal->type == SignalType::BUY ? "BUY " : "SELL ")
-                              << order.quantity << " @ " << priceIntToDouble(bars[symbol].close) << std::endl;
+                              << (signal->type == SignalType::BUY ? "BUY " : "SELL ") << " @ "
+                              << priceIntToDouble(bars[symbol].open) << std::endl;
+                    std::cout << "INFO | Unrealized PnL : "
+                              << priceIntToDouble(portfolio.getUnrealizedPnL(bars))
+                              << " | Realized PnL : "
+                              << priceIntToDouble(portfolio.getRealizedPnL()) << std::endl;
 
-                    std::cout << "INFO | Unrealized PnL : " << priceIntToDouble(portfolio.getUnrealizedPnL(bars))
-                              << " | Realized PnL : " << priceIntToDouble(portfolio.getRealizedPnL()) << std::endl;
-
-                    std::cout << "INFO | Total Equity Before: " << priceIntToDouble(portfolio.getTotalEquity(bars))
-                              << std::endl;
+                    std::cout << "INFO | Total Equity Before: "
+                              << priceIntToDouble(portfolio.getTotalEquity(bars)) << std::endl;
                 }
 
-                portfolio.executeOrder(order, true);
+                // portfolio.executeOrder(order, true);
 
                 if (DEBUG) {
                     std::cout << "INFO | Total Equity After: " << std::setprecision(7)
-                              << priceIntToDouble(portfolio.getTotalEquity(bars) ) << std::endl;
+                              << priceIntToDouble(portfolio.getTotalEquity(bars)) << std::endl;
 
-                    std::cout << "DEBUG: equity: " << priceIntToDouble(portfolio.getTotalEquity(bars) ) << std::endl;
+                    std::cout << "DEBUG: equity: "
+                              << priceIntToDouble(portfolio.getTotalEquity(bars)) << std::endl;
 
                     auto it = portfolio.getCurrentPositions().find(nq_id);
                     std::cout << "INFO | Total Positions After: "
@@ -149,8 +170,9 @@ int main() {
     std::cout << "\n=== Backtest Complete ===" << std::endl;
     std::cout << "Bars processed : " << barCount << std::endl;
     std::cout << "Trades         : " << portfolio.getAllTrades().size() << std::endl;
-    std::cout << "Realized PnL   : " << priceIntToDouble(portfolio.getRealizedPnL() ) << std::endl;
-    std::cout << "Final Equity   : " << priceIntToDouble(portfolio.getTotalEquity(finalBars) ) << std::endl;
+    std::cout << "Realized PnL   : " << priceIntToDouble(portfolio.getRealizedPnL()) << std::endl;
+    std::cout << "Final Equity   : " << priceIntToDouble(portfolio.getTotalEquity(finalBars))
+              << std::endl;
 
     std::cout << "\n=== Strategy Performance Statistics ===" << std::endl;
 

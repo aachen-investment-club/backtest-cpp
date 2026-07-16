@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <stdexcept>
+
 #include "backtest-cpp/types.h"
 
 Annualization Performance::getAnnualization(Frequency freq) {  // TODO: make instrument specific
@@ -20,7 +21,7 @@ Annualization Performance::getAnnualization(Frequency freq) {  // TODO: make ins
 double Performance::annualizedReturn(const std::vector<EquityPoint>& curve, Frequency freq) {
     if (curve.size() < 2) throw std::runtime_error("Equity curve too short");
 
-    double start =  priceIntToDouble(curve.front().equity);
+    double start = priceIntToDouble(curve.front().equity);
     double end = priceIntToDouble(curve.back().equity);
 
     double periods = static_cast<double>(curve.size() - 1);
@@ -36,15 +37,14 @@ double Performance::annualizedVolatility(const std::vector<EquityPoint>& curve, 
     double sum = 0.0, sumSq = 0.0;
 
     for (size_t i = 1; i < curve.size(); ++i) {
-        double r = std::log(priceIntToDouble(curve[i].equity) /
-                            priceIntToDouble(curve[i - 1].equity));
+        double r =
+            std::log(priceIntToDouble(curve[i].equity) / priceIntToDouble(curve[i - 1].equity));
         sum += r;
         sumSq += r * r;
     }
 
     double mean = sum / static_cast<double>(n);
-    double var = (sumSq - static_cast<double>(n) * mean * mean) /
-                 static_cast<double>(n - 1);
+    double var = (sumSq - static_cast<double>(n) * mean * mean) / static_cast<double>(n - 1);
 
     return std::sqrt(var * getAnnualization(freq).periodsPerYear);
 }

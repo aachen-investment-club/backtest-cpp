@@ -5,10 +5,10 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <optional>
 
 #include "backtest-cpp/types.h"
 
@@ -24,7 +24,7 @@ const std::string WHITE = "\033[0m";
 
 // Benchmark config
 constexpr std::size_t DEFAULT_ITERATIONS = 20;
-constexpr int WARMUP_RUNS = 1;  
+constexpr int WARMUP_RUNS = 1;
 
 std::string getCurrentDateTime() {
     std::time_t t = std::time(nullptr);
@@ -210,9 +210,11 @@ int main(int argc, char* argv[]) {
     double best_throughput = 0.0;
     if (!runs.empty()) {
         best_throughput =
-            std::max_element(runs.begin(), runs.end(), [](const PerformanceRunResult& a, const PerformanceRunResult& b) {
-                return a.throughput < b.throughput;
-            })->throughput;
+            std::max_element(runs.begin(), runs.end(),
+                             [](const PerformanceRunResult& a, const PerformanceRunResult& b) {
+                                 return a.throughput < b.throughput;
+                             })
+                ->throughput;
     }
 
     // -------------------------------------------------
