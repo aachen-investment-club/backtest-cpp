@@ -131,8 +131,8 @@ std::map<uint32_t, Order> SMACrossover::generateOrders(const std::map<uint32_t, 
         }
 
         // Calculate target position size
-        int target_size =
-            static_cast<int>(std::floor(maxInvest / priceIntToDouble(currentBars.at(sig_symbol_id).open)));
+        int target_size = static_cast<int>(
+            std::floor(maxInvest / priceIntToDouble(currentBars.at(sig_symbol_id).open)));
 
         int quantity = 0;
 

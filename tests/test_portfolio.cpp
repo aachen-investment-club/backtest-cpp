@@ -65,7 +65,7 @@ TEST_F(PortfolioTest, CheckOverdraftWithSufficientFunds) {
     Order order;
     order.symbol_id = NQ_ID;
     order.time = std::time(nullptr);
-    order.price =  priceDoubleToInt(100.0);
+    order.price = priceDoubleToInt(100.0);
     order.direction = SignalType::BUY;
     order.quantity = 10;
     order.type = OrderType::MARKET;
@@ -102,7 +102,7 @@ TEST_F(PortfolioTest, CheckOverdraftExactAmount) {
 // ============================================================================
 
 TEST_F(PortfolioTest, NoTradesReturnsZeroRealizedPnL) {
-    double pnl = priceIntToDouble(portfolio->getRealizedPnL() );
+    double pnl = priceIntToDouble(portfolio->getRealizedPnL());
     EXPECT_DOUBLE_EQ(pnl, 0.0);
 }
 
@@ -155,7 +155,7 @@ TEST_F(PortfolioTest, CalculateEquityWithSyntheticData) {
     std::vector<Bar> currentBars(NQ_ID + 1);
     currentBars[NQ_ID] = createTestBar(NQ_ID, 100.0);
 
-    double equity = priceIntToDouble(portfolio->getTotalEquity(currentBars) );
+    double equity = priceIntToDouble(portfolio->getTotalEquity(currentBars));
     EXPECT_DOUBLE_EQ(equity, 100000.0);
 }
 
@@ -163,7 +163,7 @@ TEST_F(PortfolioTest, CInitialState) {
     std::vector<Bar> currentBars(NQ_ID + 1);
     currentBars[NQ_ID] = createTestBar(NQ_ID, 100.0);
 
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getTotalEquity(currentBars) ), 100000.0);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getTotalEquity(currentBars)), 100000.0);
     EXPECT_TRUE(portfolio->getCurrentPositions().empty());
 }
 
@@ -171,7 +171,7 @@ TEST_F(PortfolioTest, CNoPositionsReturnsZeroInvestedValue) {
     std::vector<Bar> currentBars(NQ_ID + 1);
     currentBars[NQ_ID] = createTestBar(NQ_ID, 100.0);
 
-    double invested = priceIntToDouble(portfolio->getInvestedValue(currentBars) );
+    double invested = priceIntToDouble(portfolio->getInvestedValue(currentBars));
     EXPECT_DOUBLE_EQ(invested, 0.0);
 }
 
@@ -179,7 +179,7 @@ TEST_F(PortfolioTest, CNoPositionsReturnsZeroUnrealizedPnL) {
     std::vector<Bar> currentBars(NQ_ID + 1);
     currentBars[NQ_ID] = createTestBar(NQ_ID, 100.0);
 
-    double pnl = priceIntToDouble(portfolio->getUnrealizedPnL(currentBars) );
+    double pnl = priceIntToDouble(portfolio->getUnrealizedPnL(currentBars));
     EXPECT_DOUBLE_EQ(pnl, 0.0);
 }
 
@@ -190,7 +190,7 @@ TEST_F(PortfolioTest, CNoPositionsReturnsZeroUnrealizedPnL) {
 TEST_F(PortfolioTest, OpenLongPositionDeductsCash) {
     Order order = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(order, false);
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getAvailableCash() ), 98997.30);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getAvailableCash()), 98997.30);
 }
 
 TEST_F(PortfolioTest, OpenLongPositionCreatesPosition) {
@@ -210,7 +210,7 @@ TEST_F(PortfolioTest, OpenLongPositionCorrectInvestedValue) {
     std::vector<Bar> bars(NQ_ID + 1);
     bars[NQ_ID] = createTestBar(NQ_ID, 105.0);
 
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getInvestedValue(bars) ), 1050.0);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getInvestedValue(bars)), 1050.0);
 }
 
 TEST_F(PortfolioTest, OpenLongPositionCorrectUnrealizedPnL) {
@@ -220,7 +220,7 @@ TEST_F(PortfolioTest, OpenLongPositionCorrectUnrealizedPnL) {
     std::vector<Bar> bars(NQ_ID + 1);
     bars[NQ_ID] = createTestBar(NQ_ID, 105.0);
 
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getUnrealizedPnL(bars) ), 50.0 - 2.7);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getUnrealizedPnL(bars)), 50.0 - 2.7);
 }
 
 TEST_F(PortfolioTest, OpenLongPositionCorrectTotalEquity) {
@@ -230,7 +230,7 @@ TEST_F(PortfolioTest, OpenLongPositionCorrectTotalEquity) {
     std::vector<Bar> bars(NQ_ID + 1);
     bars[NQ_ID] = createTestBar(NQ_ID, 105.0);
 
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getTotalEquity(bars) ), 100047.30);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getTotalEquity(bars)), 100047.30);
 }
 
 // ============================================================================
@@ -240,7 +240,7 @@ TEST_F(PortfolioTest, OpenLongPositionCorrectTotalEquity) {
 TEST_F(PortfolioTest, OpenShortPositionDeductsCash) {
     Order order = createTestOrder(NQ_ID, SignalType::SELL, 100.0, -10);
     portfolio->executeOrder(order, false);
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getAvailableCash() ), 98997.30);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getAvailableCash()), 98997.30);
 }
 
 TEST_F(PortfolioTest, OpenShortPositionCreatesPosition) {
@@ -250,7 +250,7 @@ TEST_F(PortfolioTest, OpenShortPositionCreatesPosition) {
     const auto& positions = portfolio->getCurrentPositions();
     ASSERT_EQ(positions.size(), 1);
     EXPECT_EQ(positions.at(NQ_ID).quantity, -10);
-    EXPECT_DOUBLE_EQ(priceIntToDouble(positions.at(NQ_ID).averagePrice ), 100.0);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(positions.at(NQ_ID).averagePrice), 100.0);
 }
 
 TEST_F(PortfolioTest, OpenShortPositionCorrectInvestedValue) {
@@ -260,7 +260,7 @@ TEST_F(PortfolioTest, OpenShortPositionCorrectInvestedValue) {
     std::vector<Bar> bars(NQ_ID + 1);
     bars[NQ_ID] = createTestBar(NQ_ID, 95.0);
 
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getInvestedValue(bars) ), 1050.0);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getInvestedValue(bars)), 1050.0);
 }
 
 TEST_F(PortfolioTest, OpenShortPositionCorrectUnrealizedPnL) {
@@ -270,7 +270,7 @@ TEST_F(PortfolioTest, OpenShortPositionCorrectUnrealizedPnL) {
     std::vector<Bar> bars(NQ_ID + 1);
     bars[NQ_ID] = createTestBar(NQ_ID, 95.0);
 
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getUnrealizedPnL(bars) ), 50.0 - 2.7);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getUnrealizedPnL(bars)), 50.0 - 2.7);
 }
 
 TEST_F(PortfolioTest, OpenShortPositionLosesMoneyWhenPriceRises) {
@@ -280,7 +280,7 @@ TEST_F(PortfolioTest, OpenShortPositionLosesMoneyWhenPriceRises) {
     std::vector<Bar> bars(NQ_ID + 1);
     bars[NQ_ID] = createTestBar(NQ_ID, 105.0);
 
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getUnrealizedPnL(bars) ), -50.0 - 2.7);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getUnrealizedPnL(bars)), -50.0 - 2.7);
 }
 
 // ============================================================================
@@ -290,13 +290,13 @@ TEST_F(PortfolioTest, OpenShortPositionLosesMoneyWhenPriceRises) {
 TEST_F(PortfolioTest, AvailableCashAfterLongOpen) {
     Order openOrder = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10);
     portfolio->executeOrder(openOrder, false);
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getAvailableCash() ), 98997.3);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getAvailableCash()), 98997.3);
 }
 
 TEST_F(PortfolioTest, AvailableCashAfterShortOpen) {
     Order openOrder = createTestOrder(NQ_ID, SignalType::SELL, 100.0, 10);
     portfolio->executeOrder(openOrder, false);
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getAvailableCash() ), 98997.3);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getAvailableCash()), 98997.3);
 }
 
 // ============================================================================
@@ -309,7 +309,7 @@ TEST_F(PortfolioTest, CloseLongPositionWithProfit) {
 
     Order closeOrder = createTestOrder(NQ_ID, SignalType::SELL, 110.0, -10);
     portfolio->executeOrder(closeOrder, true);
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getAvailableCash() ), 100094.6);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getAvailableCash()), 100094.6);
 }
 
 TEST_F(PortfolioTest, CloseLongPositionRemovesPosition) {
@@ -329,7 +329,7 @@ TEST_F(PortfolioTest, CloseLongPositionCorrectRealizedPnL) {
     Order closeOrder = createTestOrder(NQ_ID, SignalType::SELL, 110.0, -10);
     portfolio->executeOrder(closeOrder, true);
 
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getRealizedPnL() ), 94.6);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getRealizedPnL()), 94.6);
 }
 
 TEST_F(PortfolioTest, CloseLongPositionWithLoss) {
@@ -339,7 +339,7 @@ TEST_F(PortfolioTest, CloseLongPositionWithLoss) {
     Order closeOrder = createTestOrder(NQ_ID, SignalType::SELL, 95.0, -10);
     portfolio->executeOrder(closeOrder, true);
 
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getRealizedPnL() ), -55.40);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getRealizedPnL()), -55.40);
 }
 
 TEST_F(PortfolioTest, CloseLongPositionTotalEquityConservation) {
@@ -372,7 +372,7 @@ TEST_F(PortfolioTest, CloseShortPositionWithProfit) {
     Order closeOrder = createTestOrder(NQ_ID, SignalType::BUY, 90.0, 10);
     portfolio->executeOrder(closeOrder, true);
 
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getRealizedPnL() ), 94.60);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getRealizedPnL()), 94.60);
 }
 
 TEST_F(PortfolioTest, CloseShortPositionWithLoss) {
@@ -382,7 +382,7 @@ TEST_F(PortfolioTest, CloseShortPositionWithLoss) {
     Order closeOrder = createTestOrder(NQ_ID, SignalType::BUY, 105.0, 10);
     portfolio->executeOrder(closeOrder, true);
 
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getRealizedPnL() ), -55.40);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getRealizedPnL()), -55.40);
 }
 
 // ============================================================================
@@ -398,7 +398,7 @@ TEST_F(PortfolioTest, ReverseLongToShort) {
 
     const auto& positions = portfolio->getCurrentPositions();
     EXPECT_EQ(positions.at(NQ_ID).quantity, -10);
-    EXPECT_DOUBLE_EQ(priceIntToDouble(positions.at(NQ_ID).averagePrice ), 110.0);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(positions.at(NQ_ID).averagePrice), 110.0);
 }
 
 TEST_F(PortfolioTest, ReverseLongToShortCorrectPnL) {
@@ -408,7 +408,7 @@ TEST_F(PortfolioTest, ReverseLongToShortCorrectPnL) {
     Order reverseOrder = createTestOrder(NQ_ID, SignalType::SELL, 110.0, -20);
     portfolio->executeOrder(reverseOrder, false);
 
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getRealizedPnL() ), 94.60);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getRealizedPnL()), 94.60);
 }
 
 TEST_F(PortfolioTest, ReverseLongToShortCorrectCash) {
@@ -433,7 +433,7 @@ TEST_F(PortfolioTest, ReverseShortToLong) {
 
     const auto& positions = portfolio->getCurrentPositions();
     EXPECT_EQ(positions.at(NQ_ID).quantity, 10);
-    EXPECT_DOUBLE_EQ(priceIntToDouble(positions.at(NQ_ID).averagePrice ), 90.0);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(positions.at(NQ_ID).averagePrice), 90.0);
 }
 
 TEST_F(PortfolioTest, ReverseShortToLongCorrectPnL) {
@@ -443,7 +443,7 @@ TEST_F(PortfolioTest, ReverseShortToLongCorrectPnL) {
     Order reverseOrder = createTestOrder(NQ_ID, SignalType::BUY, 90.0, 20);
     portfolio->executeOrder(reverseOrder, false);
 
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getRealizedPnL() ), 94.60);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getRealizedPnL()), 94.60);
 }
 
 // ============================================================================
@@ -496,7 +496,7 @@ TEST_F(PortfolioTest, ZeroQuantityOrderDoesNothing) {
     Order order = createTestOrder(NQ_ID, SignalType::BUY, 100.0, 0);
     portfolio->executeOrder(order, false);
 
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getAvailableCash() ), initialCash);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getAvailableCash()), initialCash);
     EXPECT_TRUE(portfolio->getCurrentPositions().empty());
 }
 
@@ -505,5 +505,5 @@ TEST_F(PortfolioTest, InsufficientFundsBlocksOrder) {
     portfolio->executeOrder(order, false);
 
     EXPECT_TRUE(portfolio->getCurrentPositions().empty());
-    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getAvailableCash() ), 100000.0);
+    EXPECT_DOUBLE_EQ(priceIntToDouble(portfolio->getAvailableCash()), 100000.0);
 }
