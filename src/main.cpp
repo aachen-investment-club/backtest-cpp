@@ -23,10 +23,9 @@ inline const std::string DATA_DIRECTORY{"./data/used_data"};
 // -------------------------------------------------
 
 int main() {
-    auto start = std::chrono::steady_clock::now();
-
-    std::cout << "=== Backtesting Engine ===" << std::endl;
-
+    
+    std::cout << "=== Backtesting Engine ===" << "\n";
+    
     // -------------------------------------------------
     // Initialization
     // -------------------------------------------------
@@ -34,47 +33,48 @@ int main() {
     symbol_dictionary symDict;
     DataHandler dataHandler;
     Portfolio portfolio({.initialCash = 100'000.0, .commission = 2.7, .leverage = 1.0});
-
+    
     // 2. LOAD DATA FIRST!
     dataHandler.loadAllCSVs(DATA_DIRECTORY, symDict, "string");
-
+    
     uint32_t nq_id = symDict.get_id("NQ_sample.csv");
-    std::cout << "NQ_ID from Dictionary: " << nq_id << std::endl;
-
+    std::cout << "NQ_ID from Dictionary: " << nq_id << "\n";
+    
     SMACrossover strategy(nq_id, 10, 30);
-
+    
     // -------------------------------------------------
     // Strategy warm-up (SMA lookback)
     // -------------------------------------------------
     std::vector<std::vector<Bar>> historicalData;
-
+    
     for (int i = 0; i < 30 && dataHandler.hasMoreData(); ++i) {
         historicalData.push_back(dataHandler.getNextBars());
     }
     strategy.onInit(historicalData);
-    std::cout << "Starting backtest..." << std::endl;
-
+    std::cout << "Starting backtest..." << "\n";
+    
     // -------------------------------------------------
     // Equity curve storage
     // -------------------------------------------------
     std::vector<EquityPoint> equityCurve;
     equityCurve.reserve(100000);  // avoid reallocations
-
+    
     std::deque<Order> openOrders;
-
+    
     int barCount = 0;
-
+    
     // -------------------------------------------------
     // Main backtest loop
     // -------------------------------------------------
+    auto start = std::chrono::steady_clock::now(); // Timing the hot loop
     while (dataHandler.hasMoreData()) {
         std::vector<Bar> bars = dataHandler.getNextBars();
 
-        auto posIt = portfolio.getCurrentPositions().find(nq_id);
-        if (posIt != portfolio.getCurrentPositions().end() && bars[nq_id].time == 0) {
-            std::cerr << "BUG: Have NQ position but bars doesn't contain NQ at bar " << barCount
-                      << std::endl;
-        }
+        // auto posIt = portfolio.getCurrentPositions().find(nq_id);
+        // if (posIt != portfolio.getCurrentPositions().end() && bars[nq_id].time == 0) {
+        //     std::cerr << "BUG: Have NQ position but bars doesn't contain NQ at bar " << barCount
+        //               << "\n";
+        // }
 
         // Execute open orders
         for (Order &order : openOrders) {
@@ -103,37 +103,38 @@ int main() {
                 if (DEBUG) {
                     std::cout << "Order at bar " << barCount << ": "
                               << (signal->type == SignalType::BUY ? "BUY " : "SELL ") << " @ "
-                              << priceIntToDouble(bars[symbol].open) << std::endl;
+                              << priceIntToDouble(bars[symbol].open) << "\n";
                     std::cout << "INFO | Unrealized PnL : "
                               << priceIntToDouble(portfolio.getUnrealizedPnL(bars))
                               << " | Realized PnL : "
-                              << priceIntToDouble(portfolio.getRealizedPnL()) << std::endl;
+                              << priceIntToDouble(portfolio.getRealizedPnL()) << "\n";
 
                     std::cout << "INFO | Total Equity Before: "
-                              << priceIntToDouble(portfolio.getTotalEquity(bars)) << std::endl;
+                              << priceIntToDouble(portfolio.getTotalEquity(bars)) << "\n";
                 }
 
                 // portfolio.executeOrder(order, true);
 
                 if (DEBUG) {
                     std::cout << "INFO | Total Equity After: " << std::setprecision(7)
-                              << priceIntToDouble(portfolio.getTotalEquity(bars)) << std::endl;
+                              << priceIntToDouble(portfolio.getTotalEquity(bars)) << "\n";
 
                     std::cout << "DEBUG: equity: "
-                              << priceIntToDouble(portfolio.getTotalEquity(bars)) << std::endl;
+                              << priceIntToDouble(portfolio.getTotalEquity(bars)) << "\n";
 
                     auto it = portfolio.getCurrentPositions().find(nq_id);
                     std::cout << "INFO | Total Positions After: "
                               << (it != portfolio.getCurrentPositions().end() ? it->second.quantity
                                                                               : 0)
-                              << std::endl;
+                              << "\n";
 
-                    std::cout << "----------------------------------------------" << std::endl;
+                    std::cout << "----------------------------------------------" << "\n";
                 }
             }
         }
-        // std::cout << "DEBUG: Logged time: " << bars.begin()->second.time << std::endl;
-        // std::cout << "DEBUG: Logged Equity: " << portfolio.getTotalEquity(bars) << std::endl;
+
+        // std::cout << "DEBUG: Logged time: " << bars.begin()->second.time << "\n";
+        // std::cout << "DEBUG: Logged Equity: " << portfolio.getTotalEquity(bars) << "\n";
 
         // Record equity every bar (CRITICAL)
         int64_t barTime = 0;
@@ -148,6 +149,8 @@ int main() {
         }
         ++barCount;
     }
+    auto end = std::chrono::steady_clock::now(); // End timing at end of hot loop
+    std::chrono::duration<double> elapsed_seconds = end - start;
 
     // -------------------------------------------------
     // Final liquidation
@@ -167,14 +170,14 @@ int main() {
     // -------------------------------------------------
     // Backtest summary
     // -------------------------------------------------
-    std::cout << "\n=== Backtest Complete ===" << std::endl;
-    std::cout << "Bars processed : " << barCount << std::endl;
-    std::cout << "Trades         : " << portfolio.getAllTrades().size() << std::endl;
-    std::cout << "Realized PnL   : " << priceIntToDouble(portfolio.getRealizedPnL()) << std::endl;
+    std::cout << "\n=== Backtest Complete ===" << "\n";
+    std::cout << "Bars processed : " << barCount << "\n";
+    std::cout << "Trades         : " << portfolio.getAllTrades().size() << "\n";
+    std::cout << "Realized PnL   : " << priceIntToDouble(portfolio.getRealizedPnL()) << "\n";
     std::cout << "Final Equity   : " << priceIntToDouble(portfolio.getTotalEquity(finalBars))
-              << std::endl;
+              << "\n";
 
-    std::cout << "\n=== Strategy Performance Statistics ===" << std::endl;
+    std::cout << "\n=== Strategy Performance Statistics ===" << "\n";
 
     double annReturn = Performance::annualizedReturn(equityCurve, Frequency::MINUTE);
 
@@ -183,14 +186,11 @@ int main() {
     double sharpe = Performance::sharpeRatio(equityCurve, Frequency::MINUTE, 0.0);
 
     std::cout << std::fixed << std::setprecision(4);
-    std::cout << "Annualized Return : " << annReturn * 100 << " %" << std::endl;
-    std::cout << "Annualized Vol    : " << annVol * 100 << " %" << std::endl;
-    std::cout << "Sharpe Ratio      : " << sharpe << std::endl;
+    std::cout << "Annualized Return : " << annReturn * 100 << " %" << "\n";
+    std::cout << "Annualized Vol    : " << annVol * 100 << " %" << "\n";
+    std::cout << "Sharpe Ratio      : " << sharpe << "\n";
 
-    std::cout << "\n=== System Performance Statistics ===" << std::endl;
-
-    auto end = std::chrono::steady_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "\n=== System Performance Statistics ===" << "\n";
 
     double throughput =
         static_cast<double>(dataHandler.size()) / elapsed_seconds.count() / 1'000'000.0;
