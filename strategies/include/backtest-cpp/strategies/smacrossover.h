@@ -1,6 +1,6 @@
 #pragma once
 
-#include "backtest-cpp/strategy.h"
+#include "backtest-cpp/strategy.hpp"
 
 class SMACrossover : public Strategy {
    public:
