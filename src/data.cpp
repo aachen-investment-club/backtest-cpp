@@ -186,7 +186,7 @@ const std::vector<Bar>& DataHandler::getCurrentBars() const {
     return currentMarketState_;
 }
 
-const std::vector<Bar>& DataHandler::getNextBars() {
+std::vector<Bar>& DataHandler::getNextBars() {
     int64_t max_time = std::numeric_limits<int64_t>::max();
     bool data_remains = false;
 

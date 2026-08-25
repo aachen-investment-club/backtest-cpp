@@ -7,3 +7,4 @@
 |2026-07-13:20:24|./data/NQ_sample.csv|11.0903|0.17|0.46|3.61|12.50|Minor performance gain from single pass volatility calculation. std::log has not been the bottleneck for volatility calculation|
 **Meps tracking updated to hotloop measurement only**. Previous values are in a context of the entire main function, not just the hot loop.|
 |2026-08-04:11:12|./data/NQ_sample.csv|25.1142|0.16|0.42|3.69|12.50|Updated tracking to hot loop. Pinned to performance core with set 4.8GHz frequency. Included designated isolcpu and testing on bare tty|
+|2026-08-25:17:42|./data/NQ_sample.csv|31.5850|0.18|0.72|3.45|12.51|Using references to make bar an alias for datahandler.getNextBars() in the hotloop, instead of a deep copy into a new vector on iteration|

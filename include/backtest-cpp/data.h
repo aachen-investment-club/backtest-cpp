@@ -24,7 +24,7 @@ class DataHandler {
     void loadAllCSVs(const std::string& directory, const std::string_view mode = "string");
     void loadAllCSVs(const std::string& directory, symbol_dictionary& symDict,
                      std::string_view mode);
-    const std::vector<Bar>& getNextBars();
+    std::vector<Bar>& getNextBars();
     const std::vector<Bar>& getCurrentBars() const;
     bool hasMoreData() const;
     void reset();
