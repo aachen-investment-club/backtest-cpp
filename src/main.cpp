@@ -68,7 +68,7 @@ int main() {
     // -------------------------------------------------
     auto start = std::chrono::steady_clock::now(); // Timing the hot loop
     while (dataHandler.hasMoreData()) {
-        std::vector<Bar> bars = dataHandler.getNextBars();
+        std::vector<Bar>& bars = dataHandler.getNextBars();
 
         // auto posIt = portfolio.getCurrentPositions().find(nq_id);
         // if (posIt != portfolio.getCurrentPositions().end() && bars[nq_id].time == 0) {
