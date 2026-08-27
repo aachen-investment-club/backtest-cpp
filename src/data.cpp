@@ -53,6 +53,17 @@ void DataHandler::makeBinary(const std::string& csv_filepath, const std::string&
         throw std::runtime_error("Failed to open binary file for writing: " + binary_filepath);
     }
 
+    // fill header
+    BinaryCacheHeader header;
+    std::memcpy(header.magic, CACHE_MAGIC, sizeof(CACHE_MAGIC));
+    header.version = CACHE_FORMAT_VERSION;
+    header.size_of_bar = sizeof(Bar);
+    header.num_of_bars = static_cast<uint32_t>(bars.size());
+
+    // Safely write header to disk
+    out.write(reinterpret_cast<const char*>(&header),
+              static_cast<std::streamsize>(sizeof(BinaryCacheHeader)));
+
     // Safely write flat Bar vector to disk
     const auto bytes = bars.size() * sizeof(Bar);
     if (bytes > static_cast<std::size_t>(std::numeric_limits<std::streamsize>::max())) {
@@ -71,25 +82,40 @@ std::vector<Bar> DataHandler::mapBinary(const std::string& binary_filepath) {
 
     // Safely read in binary file
     std::streamsize size = in.tellg();
-    if (size == -1) {
+    if (size < 0) {
         throw std::runtime_error("Stream error on file: " + binary_filepath);
     }
-    if (size == 0) {
-        return {};  // File has no data
-    }
-    in.seekg(0, std::ios::beg);
 
     const auto file_size = static_cast<std::size_t>(size);
-    if (file_size % sizeof(Bar) != 0) {
-        throw std::runtime_error(
-            "Data file size has been corrupted - not a multiple of sizeof(Bar)");
+
+    in.seekg(0, std::ios::beg);
+
+    if (file_size < sizeof(BinaryCacheHeader)) {
+        throw std::runtime_error("Binary file is damaged.");
     }
 
-    std::size_t num_bars = file_size / sizeof(Bar);
+    BinaryCacheHeader header;
+    in.read(reinterpret_cast<char*>(&header),
+            static_cast<std::streamsize>(sizeof(BinaryCacheHeader)));
+    if (std::memcmp(header.magic, CACHE_MAGIC, sizeof(CACHE_MAGIC))) {
+        throw std::runtime_error("Magic of binary header is faulty.");
+    }
+    if (header.version != CACHE_FORMAT_VERSION) {
+        throw std::runtime_error("Version of header is incorrect.");
+    }
+    if (header.size_of_bar != sizeof(Bar)) {
+        throw std::runtime_error("Cache file is outdated and has to be newly generated: " +
+                                 binary_filepath);
+    }
+    if (sizeof(header) + sizeof(Bar) * header.num_of_bars != file_size) {
+        throw std::runtime_error("File size is corrupted.");
+    }
+
+    std::size_t num_bars = header.num_of_bars;
     std::vector<Bar> bars(num_bars);
 
-    // Read the ENTIRE file directly into the vector
-    if (in.read(reinterpret_cast<char*>(bars.data()), size)) {
+    // Read ALL the bars directly into the vector
+    if (in.read(reinterpret_cast<char*>(bars.data()), sizeof(Bar) * header.num_of_bars)) {
         return bars;
     } else {
         throw std::runtime_error("Error reading binary file: " + binary_filepath);
@@ -124,9 +150,16 @@ void DataHandler::loadCSV(const std::string& csv_filepath, uint32_t symbol_id,
     }
 
     // Load rvalue returned by mapBinary() into internal instrumentData_ 2D vector
-    instrumentData_[symbol_id] = mapBinary(binary_filepath);
-    // TODO: make sure to add symbol of symbol_id to symDict before running with:
-    // assign_and_save_id(symbol);
+    try {
+        instrumentData_[symbol_id] = mapBinary(binary_filepath);
+        // TODO: make sure to add symbol of symbol_id to symDict before running with:
+        // assign_and_save_id(symbol);
+    } catch (const std::runtime_error& error) {
+        std::cout << error.what() << "\n"
+                  << "Cache outdated. Is newly generated.\n";
+        makeBinary(csv_filepath, binary_filepath, symbol_id, mode);
+        instrumentData_[symbol_id] = mapBinary(binary_filepath);
+    }
 
     // Assert sorted chronological data in O(n)
     assert(std::is_sorted(instrumentData_[symbol_id].begin(), instrumentData_[symbol_id].end(),
