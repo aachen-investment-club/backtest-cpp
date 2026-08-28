@@ -39,7 +39,7 @@ Run and profile the code via the analysis tool (currently linux only):
 ```bash
 sudo cpupower frequency-set -g performance
 sudo cpupower frequency-set -d 4.8GHz -u 4.8GHz  
-taskset -c 2 ./build/release/performance/analyze
+taskset -c 3 ./build/release/performance/analyze
 ```  
 
 The results and comparisons are written to the performance table in:
@@ -64,7 +64,7 @@ The goal of this project is to build this rather standard backtester into a low-
 - [X] (!) **Symbol Interning:** Replace `std::string` instrument keys with `uint32_t` IDs or Enums to remove string comparisons and allocations.
 - [X] (!) **Contiguous Data Structures:** Replace `std::map<std::string, Bar>` with `std::vector<Bar>` indexed by Instrument ID to eliminate cache misses from pointer chasing.
 - [X] **High-Precision Time:** Replace `time_t` (seconds) with `std::chrono::nanoseconds` or `int64_t` (nanoseconds since epoch).
-- [ ] (!) **Cache-Line Alignment & Padding:** Align `Bar` and `Position` structs to 64-byte boundaries (`alignas(64)`) to optimize CPU L1 cache fetch and prevent false sharing.
+- [X] (!) **Cache-Line Alignment & Padding:** Align `Bar` and `Position` structs to 64-byte boundaries (`alignas(64)`) to optimize CPU L1 cache fetch and prevent false sharing. (Done, not yet merged. Important for multithreading, worsens performance single threaded.)
 - [X] (!) **Fixed-Point Math:** Replace `double` for prices with `int64_t` fixed-point arithmetic (e.g., price * 10,000) to ensure deterministic logic and faster comparisons.
 
 ### Phase 2: Binary Data Mapping
