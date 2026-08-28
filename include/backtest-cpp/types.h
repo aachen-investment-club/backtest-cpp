@@ -24,6 +24,11 @@ enum class EventType {
     FILL     // Order executed
 };
 
+// MSVC reports C4324 as a warning when alignas adds padding
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4324)
+#endif
 struct alignas(64) Bar {
     uint32_t symbol_id;
     int64_t time;
@@ -33,6 +38,9 @@ struct alignas(64) Bar {
     int64_t close;
     long volume;
 };
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 // considering that long needs 8B on Linux
 static_assert(sizeof(Bar) == 64, "Wrong size of struct Bar");
@@ -67,11 +75,19 @@ struct Trade {
     int64_t commission;
 };
 
+// MSVC reports C4324 as a warning when alignas adds padding
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4324)
+#endif
 struct alignas(64) Position {
     uint32_t symbol_id;
     int quantity;
     int64_t averagePrice;
 };
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 // int needs 4 Bytes, and int64_t needs 8B
 static_assert(sizeof(Position) == 64);
