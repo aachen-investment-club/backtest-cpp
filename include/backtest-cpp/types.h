@@ -67,16 +67,15 @@ struct Trade {
     int64_t commission;
 };
 
-struct Position {
+struct alignas(64) Position {
     uint32_t symbol_id;
     int quantity;
     int64_t averagePrice;
 };
 
 // int needs 4 Bytes, and int64_t needs 8B
-// Hence sizeof(Position) should equal 16B
-static_assert(sizeof(Position) == 16);
-static_assert(alignof(Position) == 8);
+static_assert(sizeof(Position) == 64);
+static_assert(alignof(Position) == 64);
 static_assert(offsetof(Position, quantity) == 4, "Wrong offset for attribute: int quantity");
 static_assert(offsetof(Position, averagePrice) == 8,
               "Wrong offset for attribute: int64_t averagePrice");
