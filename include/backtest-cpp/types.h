@@ -24,7 +24,7 @@ enum class EventType {
     FILL     // Order executed
 };
 
-struct Bar {
+struct alignas(64) Bar {
     uint32_t symbol_id;
     int64_t time;
     int64_t open;
@@ -33,11 +33,10 @@ struct Bar {
     int64_t close;
     long volume;
 };
-// int64_t is aligned for 8B
-// sizeof(Bar) should be 56 in total
+
 // considering that long needs 8B on Linux
-static_assert(sizeof(Bar) == 56, "Wrong size of struct Bar");
-static_assert(alignof(Bar) == 8);
+static_assert(sizeof(Bar) == 64, "Wrong size of struct Bar");
+static_assert(alignof(Bar) == 64);
 static_assert(offsetof(Bar, symbol_id) == 0);
 static_assert(offsetof(Bar, time) == 8);
 static_assert(offsetof(Bar, open) == 16);
@@ -73,6 +72,7 @@ struct Position {
     int quantity;
     int64_t averagePrice;
 };
+
 // int needs 4 Bytes, and int64_t needs 8B
 // Hence sizeof(Position) should equal 16B
 static_assert(sizeof(Position) == 16);

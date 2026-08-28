@@ -8,6 +8,3 @@
 **Meps tracking updated to hotloop measurement only**. Previous values are in a context of the entire main function, not just the hot loop.|
 |2026-08-04:11:12|./data/NQ_sample.csv|25.1142|0.16|0.42|3.69|12.50|Updated tracking to hot loop. Pinned to performance core with set 4.8GHz frequency. Included designated isolcpu and testing on bare tty|
 |2026-08-25:17:42|./data/NQ_sample.csv|31.5850|0.18|0.72|3.45|12.51|Using references to make bar an alias for datahandler.getNextBars() in the hotloop, instead of a deep copy into a new vector on iteration|
-|2026-08-27:17:47|./data/NQ_sample.csv|26.2530|2.36|0.56|2.26|11.59|test1 before alignment of Bar and Position structs to 64-Byte|
-|2026-08-27:17:47|./data/NQ_sample.csv|26.0427|2.38|0.56|2.20|11.56|test2 before alignment of Bar and Position structs to 64-Byte|
-|2026-08-27:17:47|./data/NQ_sample.csv|26.5021|2.37|0.56|2.22|11.57|test3 before alignment of Bar and Position structs to 64-Byte|

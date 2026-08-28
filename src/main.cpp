@@ -23,9 +23,8 @@ inline const std::string DATA_DIRECTORY{"./data/used_data"};
 // -------------------------------------------------
 
 int main() {
-    
     std::cout << "=== Backtesting Engine ===" << "\n";
-    
+
     // -------------------------------------------------
     // Initialization
     // -------------------------------------------------
@@ -33,42 +32,42 @@ int main() {
     symbol_dictionary symDict;
     DataHandler dataHandler;
     Portfolio portfolio({.initialCash = 100'000.0, .commission = 2.7, .leverage = 1.0});
-    
+
     // 2. LOAD DATA FIRST!
     dataHandler.loadAllCSVs(DATA_DIRECTORY, symDict, "string");
-    
+
     uint32_t nq_id = symDict.get_id("NQ_sample.csv");
     std::cout << "NQ_ID from Dictionary: " << nq_id << "\n";
-    
+
     SMACrossover strategy(nq_id, 10, 30);
-    
+
     // -------------------------------------------------
     // Strategy warm-up (SMA lookback)
     // -------------------------------------------------
     std::vector<std::vector<Bar>> historicalData;
-    
+
     for (int i = 0; i < 30 && dataHandler.hasMoreData(); ++i) {
         historicalData.push_back(dataHandler.getNextBars());
     }
     strategy.onInit(historicalData);
     std::cout << "Starting backtest..." << "\n";
-    
+
     // -------------------------------------------------
     // Equity curve storage
     // -------------------------------------------------
     std::vector<EquityPoint> equityCurve;
     equityCurve.reserve(100000);  // avoid reallocations
-    
+
     std::deque<Order> openOrders;
-    
+
     int barCount = 0;
-    
+
     // -------------------------------------------------
     // Main backtest loop
     // -------------------------------------------------
-    auto start = std::chrono::steady_clock::now(); // Timing the hot loop
+    auto start = std::chrono::steady_clock::now();  // Timing the hot loop
     while (dataHandler.hasMoreData()) {
-        std::vector<Bar>& bars = dataHandler.getNextBars();
+        std::vector<Bar> &bars = dataHandler.getNextBars();
 
         // auto posIt = portfolio.getCurrentPositions().find(nq_id);
         // if (posIt != portfolio.getCurrentPositions().end() && bars[nq_id].time == 0) {
@@ -149,7 +148,7 @@ int main() {
         }
         ++barCount;
     }
-    auto end = std::chrono::steady_clock::now(); // End timing at end of hot loop
+    auto end = std::chrono::steady_clock::now();  // End timing at end of hot loop
     std::chrono::duration<double> elapsed_seconds = end - start;
 
     // -------------------------------------------------
