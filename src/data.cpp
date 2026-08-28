@@ -57,7 +57,7 @@ void DataHandler::makeBinary(const std::string& csv_filepath, const std::string&
     BinaryCacheHeader header;
     std::memcpy(header.magic, CACHE_MAGIC, sizeof(CACHE_MAGIC));
     header.version = CACHE_FORMAT_VERSION;
-    header.size_of_bar = sizeof(Bar);
+    header.size_of_bar = static_cast<uint32_t>(sizeof(Bar));
     header.num_of_bars = static_cast<uint32_t>(bars.size());
 
     // Safely write header to disk
@@ -115,7 +115,7 @@ std::vector<Bar> DataHandler::mapBinary(const std::string& binary_filepath) {
     std::vector<Bar> bars(num_bars);
 
     // Read ALL the bars directly into the vector
-    if (in.read(reinterpret_cast<char*>(bars.data()), sizeof(Bar) * header.num_of_bars)) {
+    if (in.read(reinterpret_cast<char*>(bars.data()), static_cast<uint32_t>(sizeof(Bar) * header.num_of_bars))) {
         return bars;
     } else {
         throw std::runtime_error("Error reading binary file: " + binary_filepath);
