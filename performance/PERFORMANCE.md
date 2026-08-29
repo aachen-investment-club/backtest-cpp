@@ -9,3 +9,4 @@
 |2026-08-04:11:12|./data/NQ_sample.csv|25.1142|0.16|0.42|3.69|12.50|Updated tracking to hot loop. Pinned to performance core with set 4.8GHz frequency. Included designated isolcpu and testing on bare tty|
 |2026-08-25:17:42|./data/NQ_sample.csv|31.5850|0.18|0.72|3.45|12.51|Using references to make bar an alias for datahandler.getNextBars() in the hotloop, instead of a deep copy into a new vector on iteration|
 |2026-08-28:14:24|./data/NQ_sample.csv|39.0702|0.33|0.25|3.69|12.95|Run on isolated performance core DISABLING SMT Sibling setting Frequency to 4.8GHz|
+|2026-08-29:15:50|./data/NQ_sample.csv|41.0516|0.33|0.23|3.70|13.12|unordered_map instead of map in the hotloop|

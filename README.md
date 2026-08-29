@@ -39,6 +39,8 @@ Run and profile the code via the analysis tool (currently linux only):
 ```bash
 sudo cpupower frequency-set -g performance
 sudo cpupower frequency-set -d 4.8GHz -u 4.8GHz  
+sudo cpupower frequency-set -d 400MHz -u 4.8GHz
+sudo cpupower -c 3 frequency-set -g performance
 taskset -c 3 ./build/release/performance/analyze
 ```  
 
