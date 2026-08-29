@@ -3,6 +3,7 @@
 #include <iostream>
 #include <optional>
 #include <vector>
+#include <unordered_map>
 #if defined(__linux__)
 #include <sys/resource.h>  // for linux native performance tracking
 #endif
@@ -70,12 +71,6 @@ int main() {
     while (dataHandler.hasMoreData()) {
         std::vector<Bar>& bars = dataHandler.getNextBars();
 
-        // auto posIt = portfolio.getCurrentPositions().find(nq_id);
-        // if (posIt != portfolio.getCurrentPositions().end() && bars[nq_id].time == 0) {
-        //     std::cerr << "BUG: Have NQ position but bars doesn't contain NQ at bar " << barCount
-        //               << "\n";
-        // }
-
         // Execute open orders
         for (Order &order : openOrders) {
             for (const auto &bar : bars) {
@@ -88,7 +83,7 @@ int main() {
         }
         openOrders.clear();
 
-        std::map<uint32_t, std::optional<Signal>> signalMap =
+        std::unordered_map<uint32_t, std::optional<Signal>> signalMap =
             strategy.onBars(bars, portfolio.getCurrentPositions());
 
         for (const auto &[symbol, signal] : signalMap) {

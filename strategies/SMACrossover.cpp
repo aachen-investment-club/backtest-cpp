@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 #include <map>
+#include <unordered_map>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -46,13 +47,13 @@ void SMACrossover::onInit(const std::vector<std::vector<Bar>>& availableData) {
     initialized_ = true;
 }
 
-std::map<uint32_t, std::optional<Signal>> SMACrossover::onBars(std::vector<Bar>& bars,
-                                                               std::map<uint32_t, Position>&) {
+std::unordered_map<uint32_t, std::optional<Signal>> SMACrossover::onBars(std::vector<Bar>& bars,
+                                                               std::unordered_map<uint32_t, Position>&) {
     if (!initialized_) {
         return {};  // Not ready yet
     }
 
-    std::map<uint32_t, std::optional<Signal>> signalMap;
+    std::unordered_map<uint32_t, std::optional<Signal>> signalMap;
 
     for (const auto& bar : bars) {
         if (bar.symbol_id != this->symbol_id) continue;
@@ -94,7 +95,7 @@ std::map<uint32_t, std::optional<Signal>> SMACrossover::onBars(std::vector<Bar>&
 
 Order SMACrossover::generateOrder(const Signal& signal, const Bar& currentBar,
                                   const double& maxInvest,
-                                  std::map<uint32_t, Position>& positions) {
+                                  std::unordered_map<uint32_t, Position>& positions) {
     // Get current position (can be positive, negative, or zero)
     auto it = positions.find(currentBar.symbol_id);
     int current_position = (it != positions.end()) ? it->second.quantity : 0;
@@ -117,11 +118,11 @@ Order SMACrossover::generateOrder(const Signal& signal, const Bar& currentBar,
                  currentBar.close, OrderType::MARKET, quantity};
 }
 
-std::map<uint32_t, Order> SMACrossover::generateOrders(const std::map<uint32_t, Signal>& signals,
+std::unordered_map<uint32_t, Order> SMACrossover::generateOrders(const std::unordered_map<uint32_t, Signal>& signals,
                                                        const std::vector<Bar>& currentBars,
                                                        const double& maxInvest,
-                                                       std::map<uint32_t, Position>& positions) {
-    std::map<uint32_t, Order> orderMap;
+                                                       std::unordered_map<uint32_t, Position>& positions) {
+    std::unordered_map<uint32_t, Order> orderMap;
 
     for (const auto& [sig_symbol_id, signal] : signals) {
         // Get current position (can be positive, negative, or zero)
