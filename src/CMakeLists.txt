@@ -1,6 +1,5 @@
 add_library(backtest_core)
 add_library(BacktestCpp::Core ALIAS backtest_core)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
 FetchContent_Declare(

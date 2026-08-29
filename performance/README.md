@@ -24,14 +24,14 @@ The backtest run over the same sample strategy and dataset is repeated N times (
 The execution is pinned to a performance core (Core 3 with 4.8GHz max) and the CPU governor is set to performance.
 Cores 3 and 4 are SMT siblings on the benchmark machine. I isolate cpu 3 and 4, then disable cpu 4 to use core 3 to make full use of the 4.8GHz performance core.
 
-## Quick run
+## Quick Benchmark
 ```bash
 sudo cpupower frequency-set -d 4.8GHz -u 4.8GHz  
 taskset -c 3 ./build/release/performance/analyze
 ```  
 
-## Isolated Core Run (Reboots system)
-### Set isolation
+## Full precise Benchmark
+### Set isolation (Reboots system)
 ```bash
 sudo kernelstub -a "isolcpus=domain,managed_irq,3,4 nohz_full=3,4 rcu_nocbs=3,4"
 sudo reboot
