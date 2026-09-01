@@ -1,5 +1,6 @@
 #pragma once
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <ctime>
 #include <string>
@@ -23,7 +24,12 @@ enum class EventType {
     FILL     // Order executed
 };
 
-struct Bar {
+// MSVC reports C4324 as a warning when alignas adds padding
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4324)
+#endif
+struct alignas(64) Bar {
     uint32_t symbol_id;
     int64_t time;
     int64_t open;
@@ -32,6 +38,20 @@ struct Bar {
     int64_t close;
     long volume;
 };
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
+// considering that long needs 8B on Linux
+static_assert(sizeof(Bar) == 64, "Wrong size of struct Bar");
+static_assert(alignof(Bar) == 64);
+static_assert(offsetof(Bar, symbol_id) == 0);
+static_assert(offsetof(Bar, time) == 8);
+static_assert(offsetof(Bar, open) == 16);
+static_assert(offsetof(Bar, high) == 24);
+static_assert(offsetof(Bar, low) == 32);
+static_assert(offsetof(Bar, close) == 40);
+static_assert(offsetof(Bar, volume) == 48, "Wrong offset for attribute: long volume");
 
 struct Signal {
     int64_t time;
@@ -55,11 +75,26 @@ struct Trade {
     int64_t commission;
 };
 
-struct Position {
+// MSVC reports C4324 as a warning when alignas adds padding
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4324)
+#endif
+struct alignas(64) Position {
     uint32_t symbol_id;
     int quantity;
     int64_t averagePrice;
 };
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
+// int needs 4 Bytes, and int64_t needs 8B
+static_assert(sizeof(Position) == 64);
+static_assert(alignof(Position) == 64);
+static_assert(offsetof(Position, quantity) == 4, "Wrong offset for attribute: int quantity");
+static_assert(offsetof(Position, averagePrice) == 8,
+              "Wrong offset for attribute: int64_t averagePrice");
 
 struct PerformanceRunResult {
     double throughput = 0.0;
