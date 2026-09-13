@@ -3,10 +3,10 @@
 #include <cmath>
 #include <iostream>
 #include <map>
-#include <unordered_map>
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 
 #include "backtest-cpp/types.h"
 SMACrossover::SMACrossover(uint32_t sym_id, int shortPeriod, int longPeriod)
@@ -47,7 +47,8 @@ void SMACrossover::onInit(const std::vector<std::vector<Bar>>& availableData) {
     initialized_ = true;
 }
 
-void SMACrossover::onBars(std::vector<Bar>& bars, std::unordered_map<uint32_t, Position>&, std::vector<Signal>& signals) {
+void SMACrossover::onBars(std::vector<Bar>& bars, std::unordered_map<uint32_t, Position>&,
+                          std::vector<Signal>& signals) {
     if (!initialized_) {
         return;  // Not ready yet
     }
@@ -111,10 +112,9 @@ Order SMACrossover::generateOrder(const Signal& signal, const Bar& currentBar,
                  currentBar.close, OrderType::MARKET, quantity};
 }
 
-std::unordered_map<uint32_t, Order> SMACrossover::generateOrders(const std::unordered_map<uint32_t, Signal>& signals,
-                                                       const std::vector<Bar>& currentBars,
-                                                       const double& maxInvest,
-                                                       std::unordered_map<uint32_t, Position>& positions) {
+std::unordered_map<uint32_t, Order> SMACrossover::generateOrders(
+    const std::unordered_map<uint32_t, Signal>& signals, const std::vector<Bar>& currentBars,
+    const double& maxInvest, std::unordered_map<uint32_t, Position>& positions) {
     std::unordered_map<uint32_t, Order> orderMap;
 
     for (const auto& [sig_symbol_id, signal] : signals) {
