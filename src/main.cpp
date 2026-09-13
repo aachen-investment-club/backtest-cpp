@@ -67,8 +67,12 @@ int main() {
     // -------------------------------------------------
     // Main backtest loop
     // -------------------------------------------------
+    std::vector<Signal> signals;
     auto start = std::chrono::steady_clock::now(); // Timing the hot loop
     while (dataHandler.hasMoreData()) {
+
+        signals.clear();
+
         std::vector<Bar>& bars = dataHandler.getNextBars();
 
         // Execute open orders
@@ -83,48 +87,46 @@ int main() {
         }
         openOrders.clear();
 
-        std::unordered_map<uint32_t, std::optional<Signal>> signalMap =
-            strategy.onBars(bars, portfolio.getCurrentPositions());
+        strategy.onBars(bars, portfolio.getCurrentPositions(), signals);
 
-        for (const auto &[symbol, signal] : signalMap) {
-            if (signal.has_value()) {
-                // Order order = strategy.generateOrder(signal.value(), bars[symbol], 10'000,
-                //                                      portfolio.getCurrentPositions());
+        for (const auto &signal : signals) {
+        
+            // Order order = strategy.generateOrder(signal, bars[signal-symbol_id], 10'000,
+            //                                      portfolio.getCurrentPositions());
 
-                openOrders.emplace_back(strategy.generateOrder(
-                    signal.value(), bars[symbol], 10'000,
-                    portfolio.getCurrentPositions()));  // Using rvalue like a real nigga
+            openOrders.emplace_back(strategy.generateOrder(
+                signal, bars[signal.symbol_id], 10'000,
+                portfolio.getCurrentPositions()));
 
-                if (DEBUG) {
-                    std::cout << "Order at bar " << barCount << ": "
-                              << (signal->type == SignalType::BUY ? "BUY " : "SELL ") << " @ "
-                              << priceIntToDouble(bars[symbol].open) << "\n";
-                    std::cout << "INFO | Unrealized PnL : "
-                              << priceIntToDouble(portfolio.getUnrealizedPnL(bars))
-                              << " | Realized PnL : "
-                              << priceIntToDouble(portfolio.getRealizedPnL()) << "\n";
+            if (DEBUG) {
+                std::cout << "Order at bar " << barCount << ": "
+                            << (signal.type == SignalType::BUY ? "BUY " : "SELL ") << " @ "
+                            << priceIntToDouble(bars[signal.symbol_id].open) << "\n";
+                std::cout << "INFO | Unrealized PnL : "
+                            << priceIntToDouble(portfolio.getUnrealizedPnL(bars))
+                            << " | Realized PnL : "
+                            << priceIntToDouble(portfolio.getRealizedPnL()) << "\n";
 
-                    std::cout << "INFO | Total Equity Before: "
-                              << priceIntToDouble(portfolio.getTotalEquity(bars)) << "\n";
-                }
+                std::cout << "INFO | Total Equity Before: "
+                            << priceIntToDouble(portfolio.getTotalEquity(bars)) << "\n";
+            }
 
-                // portfolio.executeOrder(order, true);
+            // portfolio.executeOrder(order, true);
 
-                if (DEBUG) {
-                    std::cout << "INFO | Total Equity After: " << std::setprecision(7)
-                              << priceIntToDouble(portfolio.getTotalEquity(bars)) << "\n";
+            if (DEBUG) {
+                std::cout << "INFO | Total Equity After: " << std::setprecision(7)
+                            << priceIntToDouble(portfolio.getTotalEquity(bars)) << "\n";
 
-                    std::cout << "DEBUG: equity: "
-                              << priceIntToDouble(portfolio.getTotalEquity(bars)) << "\n";
+                std::cout << "DEBUG: equity: "
+                            << priceIntToDouble(portfolio.getTotalEquity(bars)) << "\n";
 
-                    auto it = portfolio.getCurrentPositions().find(nq_id);
-                    std::cout << "INFO | Total Positions After: "
-                              << (it != portfolio.getCurrentPositions().end() ? it->second.quantity
-                                                                              : 0)
-                              << "\n";
+                auto it = portfolio.getCurrentPositions().find(nq_id);
+                std::cout << "INFO | Total Positions After: "
+                            << (it != portfolio.getCurrentPositions().end() ? it->second.quantity
+                                                                            : 0)
+                            << "\n";
 
-                    std::cout << "----------------------------------------------" << "\n";
-                }
+                std::cout << "----------------------------------------------" << "\n";
             }
         }
 

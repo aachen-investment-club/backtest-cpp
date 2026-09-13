@@ -8,8 +8,8 @@ class SMACrossover : public Strategy {
 
     void onInit(const std::vector<std::vector<Bar>>& availableData) override;
 
-    std::unordered_map<uint32_t, std::optional<Signal>> onBars(
-        std::vector<Bar>& bars, std::unordered_map<uint32_t, Position>& positions) override;
+    void onBars(
+        std::vector<Bar>& bars, std::unordered_map<uint32_t, Position>& positions, std::vector<Signal>& signals) override;
     Order generateOrder(const Signal& signal, const Bar& currentBar, const double& maxInvest,
                         std::unordered_map<uint32_t, Position>& positions) override;
 

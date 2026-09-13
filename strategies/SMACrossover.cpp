@@ -47,13 +47,10 @@ void SMACrossover::onInit(const std::vector<std::vector<Bar>>& availableData) {
     initialized_ = true;
 }
 
-std::unordered_map<uint32_t, std::optional<Signal>> SMACrossover::onBars(std::vector<Bar>& bars,
-                                                               std::unordered_map<uint32_t, Position>&) {
+void SMACrossover::onBars(std::vector<Bar>& bars, std::unordered_map<uint32_t, Position>&, std::vector<Signal>& signals) {
     if (!initialized_) {
-        return {};  // Not ready yet
+        return;  // Not ready yet
     }
-
-    std::unordered_map<uint32_t, std::optional<Signal>> signalMap;
 
     const Bar& bar = bars[symbol_id];
     double newPrice = priceIntToDouble(bar.close);
@@ -81,14 +78,12 @@ std::unordered_map<uint32_t, std::optional<Signal>> SMACrossover::onBars(std::ve
     bool currentlyAbove = shortMA_ > longMA_;
 
     if (!previouslyAbove && currentlyAbove) {
-        signalMap[this->symbol_id] =
-            Signal{bar.time, symbol_id, SignalType::BUY};
+        signals.push_back(Signal{bar.time, symbol_id, SignalType::BUY});
     } else if (previouslyAbove && !currentlyAbove) {
-        signalMap[this->symbol_id] =
-            Signal{bar.time, symbol_id, SignalType::SELL};
+        signals.push_back(Signal{bar.time, symbol_id, SignalType::SELL});
     }
 
-    return signalMap;
+    return;
 }
 
 Order SMACrossover::generateOrder(const Signal& signal, const Bar& currentBar,
