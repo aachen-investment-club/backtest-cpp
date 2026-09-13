@@ -55,39 +55,37 @@ std::unordered_map<uint32_t, std::optional<Signal>> SMACrossover::onBars(std::ve
 
     std::unordered_map<uint32_t, std::optional<Signal>> signalMap;
 
-    for (const auto& bar : bars) {
-        if (bar.symbol_id != this->symbol_id) continue;
-        double newPrice = priceIntToDouble(bar.close);
+    const Bar& bar = bars[symbol_id];
+    double newPrice = priceIntToDouble(bar.close);
 
-        // Indicator update Logic
-        prevShortMA_ = shortMA_;
-        prevLongMA_ = longMA_;
+    // Indicator update Logic
+    prevShortMA_ = shortMA_;
+    prevLongMA_ = longMA_;
 
-        if (shortWindow_.size() >= static_cast<size_t>(shortPeriod_)) {
-            shortMA_ -= shortWindow_.front() / shortPeriod_;
-            shortWindow_.pop_front();
-        }
-        shortWindow_.push_back(newPrice);
-        shortMA_ += newPrice / shortPeriod_;
+    if (shortWindow_.size() >= static_cast<size_t>(shortPeriod_)) {
+        shortMA_ -= shortWindow_.front() / shortPeriod_;
+        shortWindow_.pop_front();
+    }
+    shortWindow_.push_back(newPrice);
+    shortMA_ += newPrice / shortPeriod_;
 
-        if (longWindow_.size() >= static_cast<size_t>(longPeriod_)) {
-            longMA_ -= longWindow_.front() / longPeriod_;
-            longWindow_.pop_front();
-        }
-        longWindow_.push_back(newPrice);
-        longMA_ += newPrice / longPeriod_;
+    if (longWindow_.size() >= static_cast<size_t>(longPeriod_)) {
+        longMA_ -= longWindow_.front() / longPeriod_;
+        longWindow_.pop_front();
+    }
+    longWindow_.push_back(newPrice);
+    longMA_ += newPrice / longPeriod_;
 
-        // Trading Logic
-        bool previouslyAbove = prevShortMA_ > prevLongMA_;
-        bool currentlyAbove = shortMA_ > longMA_;
+    // Trading Logic
+    bool previouslyAbove = prevShortMA_ > prevLongMA_;
+    bool currentlyAbove = shortMA_ > longMA_;
 
-        if (!previouslyAbove && currentlyAbove) {
-            signalMap[this->symbol_id] =
-                Signal{bars[this->symbol_id].time, this->symbol_id, SignalType::BUY};
-        } else if (previouslyAbove && !currentlyAbove) {
-            signalMap[this->symbol_id] =
-                Signal{bars[this->symbol_id].time, this->symbol_id, SignalType::SELL};
-        }
+    if (!previouslyAbove && currentlyAbove) {
+        signalMap[this->symbol_id] =
+            Signal{bar.time, symbol_id, SignalType::BUY};
+    } else if (previouslyAbove && !currentlyAbove) {
+        signalMap[this->symbol_id] =
+            Signal{bar.time, symbol_id, SignalType::SELL};
     }
 
     return signalMap;
