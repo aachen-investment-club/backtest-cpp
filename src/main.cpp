@@ -2,8 +2,8 @@
 #include <iomanip>
 #include <iostream>
 #include <optional>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 #if defined(__linux__)
 #include <sys/resource.h>  // for linux native performance tracking
 #endif
@@ -24,9 +24,8 @@ inline const std::string DATA_DIRECTORY{"./data/used_data"};
 // -------------------------------------------------
 
 int main() {
-    
     std::cout << "=== Backtesting Engine ===" << "\n";
-    
+
     // -------------------------------------------------
     // Initialization
     // -------------------------------------------------
@@ -34,46 +33,49 @@ int main() {
     symbol_dictionary symDict;
     DataHandler dataHandler;
     Portfolio portfolio({.initialCash = 100'000.0, .commission = 2.7, .leverage = 1.0});
-    
+
     // 2. LOAD DATA FIRST!
     dataHandler.loadAllCSVs(DATA_DIRECTORY, symDict, "string");
-    
+
     uint32_t nq_id = symDict.get_id("NQ_sample.csv");
     std::cout << "NQ_ID from Dictionary: " << nq_id << "\n";
-    
+
     SMACrossover strategy(nq_id, 10, 30);
-    
+
     // -------------------------------------------------
     // Strategy warm-up (SMA lookback)
     // -------------------------------------------------
     std::vector<std::vector<Bar>> historicalData;
-    
+
     for (int i = 0; i < 30 && dataHandler.hasMoreData(); ++i) {
         historicalData.push_back(dataHandler.getNextBars());
     }
     strategy.onInit(historicalData);
     std::cout << "Starting backtest..." << "\n";
-    
+
     // -------------------------------------------------
     // Equity curve storage
     // -------------------------------------------------
     std::vector<EquityPoint> equityCurve;
     equityCurve.reserve(100000);  // avoid reallocations
-    
+
     std::deque<Order> openOrders;
-    
+
     int barCount = 0;
-    
+
     // -------------------------------------------------
     // Main backtest loop
     // -------------------------------------------------
-    auto start = std::chrono::steady_clock::now(); // Timing the hot loop
+    std::vector<Signal> signals;
+    auto start = std::chrono::steady_clock::now();  // Timing the hot loop
     while (dataHandler.hasMoreData()) {
+        signals.clear();
+
         std::vector<Bar>& bars = dataHandler.getNextBars();
 
         // Execute open orders
-        for (Order &order : openOrders) {
-            for (const auto &bar : bars) {
+        for (Order& order : openOrders) {
+            for (const auto& bar : bars) {
                 if (bar.symbol_id == order.symbol_id) {
                     order.price = bar.open;
                     portfolio.executeOrder(order, true);
@@ -83,48 +85,43 @@ int main() {
         }
         openOrders.clear();
 
-        std::unordered_map<uint32_t, std::optional<Signal>> signalMap =
-            strategy.onBars(bars, portfolio.getCurrentPositions());
+        strategy.onBars(bars, portfolio.getCurrentPositions(), signals);
 
-        for (const auto &[symbol, signal] : signalMap) {
-            if (signal.has_value()) {
-                // Order order = strategy.generateOrder(signal.value(), bars[symbol], 10'000,
-                //                                      portfolio.getCurrentPositions());
+        for (const auto& signal : signals) {
+            // Order order = strategy.generateOrder(signal, bars[signal-symbol_id], 10'000,
+            //                                      portfolio.getCurrentPositions());
 
-                openOrders.emplace_back(strategy.generateOrder(
-                    signal.value(), bars[symbol], 10'000,
-                    portfolio.getCurrentPositions()));  // Using rvalue like a real nigga
+            openOrders.emplace_back(strategy.generateOrder(signal, bars[signal.symbol_id], 10'000,
+                                                           portfolio.getCurrentPositions()));
 
-                if (DEBUG) {
-                    std::cout << "Order at bar " << barCount << ": "
-                              << (signal->type == SignalType::BUY ? "BUY " : "SELL ") << " @ "
-                              << priceIntToDouble(bars[symbol].open) << "\n";
-                    std::cout << "INFO | Unrealized PnL : "
-                              << priceIntToDouble(portfolio.getUnrealizedPnL(bars))
-                              << " | Realized PnL : "
-                              << priceIntToDouble(portfolio.getRealizedPnL()) << "\n";
+            if (DEBUG) {
+                std::cout << "Order at bar " << barCount << ": "
+                          << (signal.type == SignalType::BUY ? "BUY " : "SELL ") << " @ "
+                          << priceIntToDouble(bars[signal.symbol_id].open) << "\n";
+                std::cout << "INFO | Unrealized PnL : "
+                          << priceIntToDouble(portfolio.getUnrealizedPnL(bars))
+                          << " | Realized PnL : " << priceIntToDouble(portfolio.getRealizedPnL())
+                          << "\n";
 
-                    std::cout << "INFO | Total Equity Before: "
-                              << priceIntToDouble(portfolio.getTotalEquity(bars)) << "\n";
-                }
+                std::cout << "INFO | Total Equity Before: "
+                          << priceIntToDouble(portfolio.getTotalEquity(bars)) << "\n";
+            }
 
-                // portfolio.executeOrder(order, true);
+            // portfolio.executeOrder(order, true);
 
-                if (DEBUG) {
-                    std::cout << "INFO | Total Equity After: " << std::setprecision(7)
-                              << priceIntToDouble(portfolio.getTotalEquity(bars)) << "\n";
+            if (DEBUG) {
+                std::cout << "INFO | Total Equity After: " << std::setprecision(7)
+                          << priceIntToDouble(portfolio.getTotalEquity(bars)) << "\n";
 
-                    std::cout << "DEBUG: equity: "
-                              << priceIntToDouble(portfolio.getTotalEquity(bars)) << "\n";
+                std::cout << "DEBUG: equity: " << priceIntToDouble(portfolio.getTotalEquity(bars))
+                          << "\n";
 
-                    auto it = portfolio.getCurrentPositions().find(nq_id);
-                    std::cout << "INFO | Total Positions After: "
-                              << (it != portfolio.getCurrentPositions().end() ? it->second.quantity
-                                                                              : 0)
-                              << "\n";
+                auto it = portfolio.getCurrentPositions().find(nq_id);
+                std::cout << "INFO | Total Positions After: "
+                          << (it != portfolio.getCurrentPositions().end() ? it->second.quantity : 0)
+                          << "\n";
 
-                    std::cout << "----------------------------------------------" << "\n";
-                }
+                std::cout << "----------------------------------------------" << "\n";
             }
         }
 
@@ -133,7 +130,7 @@ int main() {
 
         // Record equity every bar (CRITICAL)
         int64_t barTime = 0;
-        for (const auto &curBar : bars) {
+        for (const auto& curBar : bars) {
             if (curBar.time > barTime) {
                 barTime = curBar.time;
             }
@@ -144,7 +141,7 @@ int main() {
         }
         ++barCount;
     }
-    auto end = std::chrono::steady_clock::now(); // End timing at end of hot loop
+    auto end = std::chrono::steady_clock::now();  // End timing at end of hot loop
     std::chrono::duration<double> elapsed_seconds = end - start;
 
     // -------------------------------------------------
@@ -154,7 +151,7 @@ int main() {
     portfolio.closeAllPositions(finalBars);
 
     int64_t barTime = 0;  // find time of the first bar in finalBars
-    for (auto &curBar : finalBars) {
+    for (auto& curBar : finalBars) {
         if (curBar.time != 0) {
             barTime = curBar.time;
             break;
