@@ -125,7 +125,7 @@ void Portfolio::executeOrder(const Order& order, const bool close) {
     bool hasPosition = (posIt != positions_.end());
 
     if (order.quantity == 0) {
-        std::cerr << "Order quantity cannot be 0" << std::endl;
+        //std::cerr << "Order quantity cannot be 0" << std::endl;
         return;
     }
 

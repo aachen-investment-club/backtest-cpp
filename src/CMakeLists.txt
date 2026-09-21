@@ -41,6 +41,8 @@ target_sources(backtest_core
             "${PROJECT_SOURCE_DIR}/include/backtest-cpp/performance.h"
             "${PROJECT_SOURCE_DIR}/include/backtest-cpp/portfolio.h"
             "${PROJECT_SOURCE_DIR}/include/backtest-cpp/strategy.h"
+            "${PROJECT_SOURCE_DIR}/include/backtest-cpp/singleAssetStrategy.h"
+            "${PROJECT_SOURCE_DIR}/include/backtest-cpp/multiAssetStrategy.h"
             "${PROJECT_SOURCE_DIR}/include/backtest-cpp/symbol_dictionary.h"
             "${PROJECT_SOURCE_DIR}/include/backtest-cpp/types.h"
             "${PROJECT_SOURCE_DIR}/include/backtest-cpp/utils.h"

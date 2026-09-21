@@ -9,6 +9,8 @@
 #include <unordered_map>
 
 #include "backtest-cpp/types.h"
+
+
 SMACrossover::SMACrossover(uint32_t sym_id, int shortPeriod, int longPeriod)
     : symbol_id(sym_id), shortPeriod_(shortPeriod), longPeriod_(longPeriod) {
     if (shortPeriod >= longPeriod) {
@@ -17,7 +19,7 @@ SMACrossover::SMACrossover(uint32_t sym_id, int shortPeriod, int longPeriod)
 }
 
 // onInit(const std::map<std::string, std::vector<Bar>>& availableData)
-void SMACrossover::onInit(const std::vector<std::vector<Bar>>& availableData) {
+void SMACrossover::onInit(const std::vector<Bar>& availableData) {
     size_t n = availableData.size();
 
     if (n < static_cast<size_t>(longPeriod_)) {
@@ -28,7 +30,7 @@ void SMACrossover::onInit(const std::vector<std::vector<Bar>>& availableData) {
     double longSum = 0.0;
 
     for (size_t i = n - static_cast<size_t>(longPeriod_); i < n; i++) {
-        double closePrice = priceIntToDouble(availableData[i].at(symbol_id).close);
+        double closePrice = priceIntToDouble(availableData[i].close);
 
         longWindow_.push_back(closePrice);
         longSum += closePrice;
@@ -47,13 +49,11 @@ void SMACrossover::onInit(const std::vector<std::vector<Bar>>& availableData) {
     initialized_ = true;
 }
 
-void SMACrossover::onBars(std::vector<Bar>& bars, std::unordered_map<uint32_t, Position>&,
-                          std::vector<Signal>& signals) {
+void SMACrossover::onBar(const Bar& bar, std::vector<Signal>& signals) {
+    
     if (!initialized_) {
         return;  // Not ready yet
     }
-
-    const Bar& bar = bars[symbol_id];
     double newPrice = priceIntToDouble(bar.close);
 
     // Indicator update Logic
@@ -79,69 +79,45 @@ void SMACrossover::onBars(std::vector<Bar>& bars, std::unordered_map<uint32_t, P
     bool currentlyAbove = shortMA_ > longMA_;
 
     if (!previouslyAbove && currentlyAbove) {
-        signals.push_back(Signal{bar.time, symbol_id, SignalType::BUY});
+        signals.push_back(Signal{.time=bar.time, .symbol_id=symbol_id, .type=SignalType::BUY});
     } else if (previouslyAbove && !currentlyAbove) {
-        signals.push_back(Signal{bar.time, symbol_id, SignalType::SELL});
+        signals.push_back(Signal{.time=bar.time, .symbol_id=symbol_id, .type=SignalType::SELL});
     }
 
-    return;
-}
-
-Order SMACrossover::generateOrder(const Signal& signal, const Bar& currentBar,
-                                  const double& maxInvest,
-                                  std::unordered_map<uint32_t, Position>& positions) {
-    // Get current position (can be positive, negative, or zero)
-    auto it = positions.find(currentBar.symbol_id);
-    int current_position = (it != positions.end()) ? it->second.quantity : 0;
-
-    // Calculate target position size
-    int target_size = static_cast<int>(std::floor(maxInvest / priceIntToDouble(currentBar.open)));
-
-    int quantity = 0;
-
-    if (signal.type == SignalType::BUY) {
-        // Target: LONG target_size
-        quantity = target_size - current_position;
-
-    } else if (signal.type == SignalType::SELL) {
-        // Target: SHORT target_size
-        quantity = -target_size - current_position;
     }
 
-    return Order{signal.time,      signal.symbol_id,  signal.type,
-                 currentBar.close, OrderType::MARKET, quantity};
-}
 
 std::unordered_map<uint32_t, Order> SMACrossover::generateOrders(
-    const std::unordered_map<uint32_t, Signal>& signals, const std::vector<Bar>& currentBars,
-    const double& maxInvest, std::unordered_map<uint32_t, Position>& positions) {
+    const std::vector<Signal>& signals, const Bar& currentBar,
+    std::unordered_map<std::uint32_t, Position>& currentPosition) {
+    
     std::unordered_map<uint32_t, Order> orderMap;
 
-    for (const auto& [sig_symbol_id, signal] : signals) {
+    for (const auto& [time, sig_symbol_id, signal_type] : signals) {
         // Get current position (can be positive, negative, or zero)
         int current_positionSize = 0;
-        if (auto it = positions.find(sig_symbol_id); it != positions.end()) {
+        if (auto it = currentPosition.find(sig_symbol_id); it != currentPosition.end()) {
             current_positionSize = it->second.quantity;
         }
 
         // Calculate target position size
         int target_size = static_cast<int>(
-            std::floor(maxInvest / priceIntToDouble(currentBars.at(sig_symbol_id).open)));
+            std::floor(maxInvest_ / priceIntToDouble(currentBar.open)));
 
         int quantity = 0;
 
-        if (signal.type == SignalType::BUY) {
+        if (signal_type == SignalType::BUY) {
             // Target: LONG target_size
             quantity = target_size - current_positionSize;
 
-        } else if (signal.type == SignalType::SELL) {
+        } else if (signal_type == SignalType::SELL) {
             // Target: SHORT target_size
             quantity = -target_size - current_positionSize;
         }
-
-        orderMap[sig_symbol_id] = Order{signal.time,       signal.symbol_id,
-                                        signal.type,       currentBars.at(sig_symbol_id).close,
-                                        OrderType::MARKET, quantity};
+        orderMap[sig_symbol_id] = Order{.time=time,       .symbol_id=sig_symbol_id,
+            .direction=signal_type,       .price=currentBar.close,
+            .type=OrderType::MARKET, .quantity=quantity};
+        
     }
 
     return orderMap;

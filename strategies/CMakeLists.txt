@@ -17,7 +17,7 @@ target_link_libraries(backtest_strategies
 
 target_sources(backtest_strategies
     PRIVATE
-        SMACrossover.cpp
+        SMACrossover/SMACrossover.cpp
     PUBLIC
         FILE_SET HEADERS
         BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include"

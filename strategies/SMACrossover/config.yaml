@@ -1,0 +1,25 @@
+strategy:
+  name: "SMA Crossover Demo Strategy"
+
+  multi_asset: false
+
+  data: 
+    data_path: "/used_data/" # relative path to the '/data' folder
+  
+  portfolio:
+    currency: "usd" # tbd, usd is fixed for now
+    capital: 100000
+    leverage: 1 
+  
+  trading:
+    roundtrip_commission: true # roundtrip commission := 1 commission paid when opening the position, none for closing. Set to false for one commission per order
+    commission: 2.7
+    spread: 0.5 # Set the current spread for the instrument you are backtesting
+
+  logging:
+    debug_logs: false # Print order parameters (quantity, side, time), invested cash, etc.
+    system_performance_logs: true # Show metrics like like events/second, L1d miss%, etc.
+
+  parameters: # Custom parameters the strategy takes in
+    long_period: 30
+    short_period: 10
