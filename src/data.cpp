@@ -115,7 +115,8 @@ std::vector<Bar> DataHandler::mapBinary(const std::string& binary_filepath) {
     std::vector<Bar> bars(num_bars);
 
     // Read ALL the bars directly into the vector
-    if (in.read(reinterpret_cast<char*>(bars.data()), static_cast<uint32_t>(sizeof(Bar) * header.num_of_bars))) {
+    if (in.read(reinterpret_cast<char*>(bars.data()),
+                static_cast<std::streamsize>(sizeof(Bar) * header.num_of_bars))) {
         return bars;
     } else {
         throw std::runtime_error("Error reading binary file: " + binary_filepath);
