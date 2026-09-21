@@ -89,3 +89,4 @@ Thumbs.db
 *.log
 
 TODO.txt
+/compile_commands.json

@@ -1,10 +1,10 @@
-#include "backtest-cpp/portfolio.h"
-
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 
+#include "backtest-cpp/portfolio.h"
 #include "backtest-cpp/types.h"
 
 Portfolio::Portfolio(const PortfolioConfig& config)
@@ -12,7 +12,7 @@ Portfolio::Portfolio(const PortfolioConfig& config)
       leverage_(config.leverage),
       commission_(priceDoubleToInt(config.commission)) {}
 
-std::map<std::uint32_t, Position>& Portfolio::getCurrentPositions() {
+std::unordered_map<std::uint32_t, Position>& Portfolio::getCurrentPositions() {
     return positions_;
 };
 

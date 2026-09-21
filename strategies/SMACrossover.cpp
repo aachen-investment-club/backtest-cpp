@@ -6,6 +6,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 
 #include "backtest-cpp/types.h"
 SMACrossover::SMACrossover(uint32_t sym_id, int shortPeriod, int longPeriod)
@@ -46,55 +47,49 @@ void SMACrossover::onInit(const std::vector<std::vector<Bar>>& availableData) {
     initialized_ = true;
 }
 
-std::map<uint32_t, std::optional<Signal>> SMACrossover::onBars(std::vector<Bar>& bars,
-                                                               std::map<uint32_t, Position>&) {
+void SMACrossover::onBars(std::vector<Bar>& bars, std::unordered_map<uint32_t, Position>&,
+                          std::vector<Signal>& signals) {
     if (!initialized_) {
-        return {};  // Not ready yet
+        return;  // Not ready yet
     }
 
-    std::map<uint32_t, std::optional<Signal>> signalMap;
+    const Bar& bar = bars[symbol_id];
+    double newPrice = priceIntToDouble(bar.close);
 
-    for (const auto& bar : bars) {
-        if (bar.symbol_id != this->symbol_id) continue;
-        double newPrice = priceIntToDouble(bar.close);
+    // Indicator update Logic
+    prevShortMA_ = shortMA_;
+    prevLongMA_ = longMA_;
 
-        // Indicator update Logic
-        prevShortMA_ = shortMA_;
-        prevLongMA_ = longMA_;
+    if (shortWindow_.size() >= static_cast<size_t>(shortPeriod_)) {
+        shortMA_ -= shortWindow_.front() / shortPeriod_;
+        shortWindow_.pop_front();
+    }
+    shortWindow_.push_back(newPrice);
+    shortMA_ += newPrice / shortPeriod_;
 
-        if (shortWindow_.size() >= static_cast<size_t>(shortPeriod_)) {
-            shortMA_ -= shortWindow_.front() / shortPeriod_;
-            shortWindow_.pop_front();
-        }
-        shortWindow_.push_back(newPrice);
-        shortMA_ += newPrice / shortPeriod_;
+    if (longWindow_.size() >= static_cast<size_t>(longPeriod_)) {
+        longMA_ -= longWindow_.front() / longPeriod_;
+        longWindow_.pop_front();
+    }
+    longWindow_.push_back(newPrice);
+    longMA_ += newPrice / longPeriod_;
 
-        if (longWindow_.size() >= static_cast<size_t>(longPeriod_)) {
-            longMA_ -= longWindow_.front() / longPeriod_;
-            longWindow_.pop_front();
-        }
-        longWindow_.push_back(newPrice);
-        longMA_ += newPrice / longPeriod_;
+    // Trading Logic
+    bool previouslyAbove = prevShortMA_ > prevLongMA_;
+    bool currentlyAbove = shortMA_ > longMA_;
 
-        // Trading Logic
-        bool previouslyAbove = prevShortMA_ > prevLongMA_;
-        bool currentlyAbove = shortMA_ > longMA_;
-
-        if (!previouslyAbove && currentlyAbove) {
-            signalMap[this->symbol_id] =
-                Signal{bars[this->symbol_id].time, this->symbol_id, SignalType::BUY};
-        } else if (previouslyAbove && !currentlyAbove) {
-            signalMap[this->symbol_id] =
-                Signal{bars[this->symbol_id].time, this->symbol_id, SignalType::SELL};
-        }
+    if (!previouslyAbove && currentlyAbove) {
+        signals.push_back(Signal{bar.time, symbol_id, SignalType::BUY});
+    } else if (previouslyAbove && !currentlyAbove) {
+        signals.push_back(Signal{bar.time, symbol_id, SignalType::SELL});
     }
 
-    return signalMap;
+    return;
 }
 
 Order SMACrossover::generateOrder(const Signal& signal, const Bar& currentBar,
                                   const double& maxInvest,
-                                  std::map<uint32_t, Position>& positions) {
+                                  std::unordered_map<uint32_t, Position>& positions) {
     // Get current position (can be positive, negative, or zero)
     auto it = positions.find(currentBar.symbol_id);
     int current_position = (it != positions.end()) ? it->second.quantity : 0;
@@ -117,11 +112,10 @@ Order SMACrossover::generateOrder(const Signal& signal, const Bar& currentBar,
                  currentBar.close, OrderType::MARKET, quantity};
 }
 
-std::map<uint32_t, Order> SMACrossover::generateOrders(const std::map<uint32_t, Signal>& signals,
-                                                       const std::vector<Bar>& currentBars,
-                                                       const double& maxInvest,
-                                                       std::map<uint32_t, Position>& positions) {
-    std::map<uint32_t, Order> orderMap;
+std::unordered_map<uint32_t, Order> SMACrossover::generateOrders(
+    const std::unordered_map<uint32_t, Signal>& signals, const std::vector<Bar>& currentBars,
+    const double& maxInvest, std::unordered_map<uint32_t, Position>& positions) {
+    std::unordered_map<uint32_t, Order> orderMap;
 
     for (const auto& [sig_symbol_id, signal] : signals) {
         // Get current position (can be positive, negative, or zero)

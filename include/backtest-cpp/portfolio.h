@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <map>
 #include <optional>
+#include <unordered_map>
 #include <vector>
 
 #include "backtest-cpp/types.h"
@@ -16,8 +17,7 @@ struct PortfolioConfig {
 class Portfolio {
    public:
     Portfolio(const PortfolioConfig& config);
-
-    std::map<std::uint32_t, Position>& getCurrentPositions();
+    std::unordered_map<std::uint32_t, Position>& getCurrentPositions();
     int64_t getInvestedValue(const std::vector<Bar>& currentBars) const;
     int64_t getTotalEquity(const std::vector<Bar>& currentBar) const;
     int64_t getRealizedPnL() const;
@@ -34,7 +34,7 @@ class Portfolio {
     const double leverage_ = 1;
     const int64_t commission_ = priceDoubleToInt(2.70);
 
-    std::map<std::uint32_t, Position> positions_;  // Open Positions
+    std::unordered_map<std::uint32_t, Position> positions_;  // Open Positions
     std::vector<Order> orders_;                    // Open Orders
     std::vector<Trade> trades_;                    // Elapsed Trades
 };

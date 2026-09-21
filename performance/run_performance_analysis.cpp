@@ -23,7 +23,7 @@ const std::string GREEN = "\033[32m";
 const std::string WHITE = "\033[0m";
 
 // Benchmark config
-constexpr std::size_t DEFAULT_ITERATIONS = 20;
+constexpr std::size_t DEFAULT_ITERATIONS = 100; // Increased from 20 for better accuracy
 constexpr int WARMUP_RUNS = 1;
 
 std::string getCurrentDateTime() {
