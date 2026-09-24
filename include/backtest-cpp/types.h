@@ -1,5 +1,6 @@
 #pragma once
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <ctime>
 #include <string>
@@ -30,8 +31,19 @@ struct Bar {
     int64_t high;
     int64_t low;
     int64_t close;
-    long volume;
+    int64_t volume;
 };
+
+// 4B of padding follow symbol_id to align the int64_t fields.
+static_assert(sizeof(Bar) == 56, "Wrong size of struct Bar");
+static_assert(alignof(Bar) == 8);
+static_assert(offsetof(Bar, symbol_id) == 0);
+static_assert(offsetof(Bar, time) == 8);
+static_assert(offsetof(Bar, open) == 16);
+static_assert(offsetof(Bar, high) == 24);
+static_assert(offsetof(Bar, low) == 32);
+static_assert(offsetof(Bar, close) == 40);
+static_assert(offsetof(Bar, volume) == 48, "Wrong offset for attribute: int64_t volume");
 
 struct Signal {
     int64_t time;
@@ -60,6 +72,13 @@ struct Position {
     int quantity;
     int64_t averagePrice;
 };
+
+// int needs 4 Bytes, and int64_t needs 8B
+static_assert(sizeof(Position) == 16);
+static_assert(alignof(Position) == 8);
+static_assert(offsetof(Position, quantity) == 4, "Wrong offset for attribute: int quantity");
+static_assert(offsetof(Position, averagePrice) == 8,
+              "Wrong offset for attribute: int64_t averagePrice");
 
 struct PerformanceRunResult {
     double throughput = 0.0;
