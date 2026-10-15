@@ -59,7 +59,7 @@ int main() {
     std::vector<EquityPoint> equityCurve;
     equityCurve.reserve(100000);  // avoid reallocations
 
-    std::deque<Order> openOrders;
+    std::vector<Order> openOrders;
 
     int barCount = 0;
 
@@ -75,12 +75,10 @@ int main() {
 
         // Execute open orders
         for (Order& order : openOrders) {
-            for (const auto& bar : bars) {
-                if (bar.symbol_id == order.symbol_id) {
-                    order.price = bar.open;
-                    portfolio.executeOrder(order, true);
-                    break;
-                }
+            const auto& bar = bars[order.symbol_id];
+            if (bar.symbol_id == order.symbol_id) {
+                order.price = bar.open;
+                portfolio.executeOrder(order, true);
             }
         }
         openOrders.clear();
