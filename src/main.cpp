@@ -21,7 +21,7 @@
 // BACKTEST PARAMETERS
 // -------------------------------------------------
 const std::filesystem::path CONFIG_PATH{"strategies/SMACrossover/config.yaml"};
-constexpr bool DEBUG = false;
+// constexpr bool DEBUG = false;
 // -------------------------------------------------
 
 int main() {
@@ -94,7 +94,7 @@ int main() {
 
         openOrders.emplace_back(strategy.generateOrders(signals, bar, portfolio.getCurrentPositions())[nq_id]);
 
-        if (DEBUG) {
+        if (config.logging_.debugLogs) {
             std::cout << "DEBUG: equity: " << priceIntToDouble(portfolio.getTotalEquity({bar}))
                         << "\n";
 

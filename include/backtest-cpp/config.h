@@ -3,8 +3,9 @@
 #include <string>
 #include <filesystem>
 #include <yaml-cpp/yaml.h>
-
+#include <memory>
 #include "backtest-cpp/portfolio.h"
+#include "backtest-cpp/strategy.h"
 
 struct StrategyConfig {
     std::string strategyType;

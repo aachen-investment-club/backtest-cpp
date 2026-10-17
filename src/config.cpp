@@ -1,4 +1,6 @@
 #include <yaml-cpp/yaml.h>
+#include <string>
+#include <memory>
 
 #include "backtest-cpp/config.h"
 
@@ -25,5 +27,3 @@ Config::Config(const std::filesystem::path& configPath) {
 
     dataPath_ = std::filesystem::path("data") / root["data"]["data_path"].as<std::string>();
 }
-
-
