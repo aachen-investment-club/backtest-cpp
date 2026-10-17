@@ -15,12 +15,13 @@
 #include "backtest-cpp/portfolio.h"
 #include "backtest-cpp/strategies/smacrossover.h"
 #include "backtest-cpp/symbol_dictionary.h"
+#include "backtest-cpp/config.h"
 
 // -------------------------------------------------
 // BACKTEST PARAMETERS
 // -------------------------------------------------
+const std::filesystem::path CONFIG_PATH{"strategies/SMACrossover/config.yaml"};
 constexpr bool DEBUG = false;
-inline const std::string DATA_DIRECTORY{"./data/used_data"};
 // -------------------------------------------------
 
 int main() {
@@ -30,12 +31,13 @@ int main() {
     // Initialization
     // -------------------------------------------------
     // 1. Initialization
+    Config config(CONFIG_PATH);
     symbol_dictionary symDict;
     DataHandler dataHandler;
-    Portfolio portfolio({.initialCash = 100'000.0, .commission = 2.7, .leverage = 1.0});
+    Portfolio portfolio(config.portfolio_);
 
     // 2. LOAD DATA FIRST!
-    dataHandler.loadAllCSVs(DATA_DIRECTORY, symDict, "string");
+    dataHandler.loadAllCSVs(config.dataPath_, symDict, "string");
 
     uint32_t nq_id = symDict.get_id("NQ_sample.csv"); // NQ_sample
     std::cout << "NQ_ID from Dictionary: " << nq_id << "\n";

@@ -20,8 +20,10 @@ target_compile_features(backtest_core PUBLIC cxx_std_20)
 find_package(Threads REQUIRED)
 
 target_include_directories(backtest_core SYSTEM PRIVATE "${csv_parser_SOURCE_DIR}")
-target_link_libraries(backtest_core 
-    PRIVATE 
+target_link_libraries(backtest_core
+    PUBLIC
+        yaml-cpp::yaml-cpp
+    PRIVATE
         $<BUILD_INTERFACE:BacktestCpp::Warnings>
         Threads::Threads
 )
@@ -33,6 +35,7 @@ target_sources(backtest_core
         portfolio.cpp
         symbol_dictionary.cpp
         utils.cpp
+        config.cpp
     PUBLIC
         FILE_SET HEADERS
         BASE_DIRS "${PROJECT_SOURCE_DIR}/include"
@@ -46,6 +49,7 @@ target_sources(backtest_core
             "${PROJECT_SOURCE_DIR}/include/backtest-cpp/symbol_dictionary.h"
             "${PROJECT_SOURCE_DIR}/include/backtest-cpp/types.h"
             "${PROJECT_SOURCE_DIR}/include/backtest-cpp/utils.h"
+            "${PROJECT_SOURCE_DIR}/include/backtest-cpp/config.h"
 )
 
 install(TARGETS backtest_core
