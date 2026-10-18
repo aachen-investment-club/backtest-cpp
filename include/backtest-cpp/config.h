@@ -13,11 +13,6 @@ struct StrategyConfig {
     bool multiAsset;
 };
 
-struct TradingConfig { // move this to PortfolioConfig also later when used
-    bool roundtripCommission;
-    double spread;
-};
-
 struct LoggingConfig {
     bool debugLogs;
     bool systemPerfLogs;
@@ -27,7 +22,6 @@ class Config {
     public:
         StrategyConfig strategy_;
         PortfolioConfig portfolio_;
-        TradingConfig trading_;
         LoggingConfig logging_;
         std::filesystem::path dataPath_;
 

@@ -1,12 +1,12 @@
 #include "backtest-cpp/strategies/strategy_factory.h"
 #include "backtest-cpp/strategies/smacrossover.h"
 #include "backtest-cpp/config.h"
-#include "backtest-cpp/singleAssetStrategy.h"
+#include "backtest-cpp/strategy.h"
 
 #include <memory>
 #include <iostream>
 
-std::unique_ptr<SingleAssetStrategy> makeStrategy(const StrategyConfig& config, uint32_t symbolId) {
+std::unique_ptr<Strategy> makeStrategy(const StrategyConfig& config, uint32_t symbolId) {
     if(config.strategyType == "SMACrossover") {
         return std::make_unique<SMACrossover>(
                                 SMACrossover(symbolId,

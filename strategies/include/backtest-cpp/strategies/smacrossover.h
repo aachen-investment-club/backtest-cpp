@@ -1,22 +1,24 @@
 #pragma once
 
-#include "backtest-cpp/singleAssetStrategy.h"
+#include "backtest-cpp/strategy.h"
 
-class SMACrossover : public SingleAssetStrategy {
+class SMACrossover : public Strategy {
    public:
     SMACrossover(uint32_t sym_id, int shortPeriod = 10, int longPeriod = 30);
 
-    void onInit(const std::vector<Bar>& availableData) override;
+    void onInit(const std::vector<std::vector<Bar>>& availableData) override;
 
-    void onBar(const Bar& bar, std::vector<Signal>& signals) override;
+    void onBars(std::vector<Bar>& bars, std::unordered_map<uint32_t, Position>& positions,
+                std::vector<Signal>& signals) override;
+    Order generateOrder(const Signal& signal, const Bar& currentBar, const double& maxInvest,
+                        std::unordered_map<uint32_t, Position>& positions) override;
 
     std::unordered_map<uint32_t, Order> generateOrders(
-        const std::vector<Signal>& signals, const Bar& currentBar,
-        std::unordered_map<std::uint32_t, Position>& currentPosition) override;
+        const std::unordered_map<uint32_t, Signal>& signals, const std::vector<Bar>& currentBars,
+        const double& maxInvest, std::unordered_map<uint32_t, Position>& positions) override;
 
    private:
     uint32_t symbol_id;
-    int maxInvest_;
     int shortPeriod_;
     int longPeriod_;
 

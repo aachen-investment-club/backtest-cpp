@@ -2,6 +2,6 @@
 
 #include<memory>
 #include "backtest-cpp/config.h"
-#include "backtest-cpp/singleAssetStrategy.h"
+#include "backtest-cpp/strategy.h"
 
-std::unique_ptr<SingleAssetStrategy> makeStrategy(const StrategyConfig& config, uint32_t symbolId);
+std::unique_ptr<Strategy> makeStrategy(const StrategyConfig& config, uint32_t symbolId);

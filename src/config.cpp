@@ -13,9 +13,9 @@ Config::Config(const std::filesystem::path& configPath) {
     strategy_.strategyParameters = strategy["parameters"];
 
     const auto& trading = root["trading"];
-    trading_.roundtripCommission = trading["roundtrip_commission"].as<bool>();
+    portfolio_.roundtripCommission = trading["roundtrip_commission"].as<bool>();
     portfolio_.commission = trading["commission"].as<double>();
-    trading_.spread = trading["spread"].as<double>();
+    portfolio_.spread = trading["spread"].as<double>();
 
     const auto& logging = root["logging"];
     logging_.debugLogs = logging["debug_logs"].as<bool>();
