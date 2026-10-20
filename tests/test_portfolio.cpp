@@ -486,6 +486,30 @@ TEST_F(PortfolioTest, EquityConservationAcrossMultipleTrades) {
     EXPECT_NEAR(priceIntToDouble(finalEquity), priceIntToDouble(initialEquity + realizedPnL), 0.1);
 }
 
+TEST_F(PortfolioTest, AddToExistingLongPosition) {
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::BUY, 100.0, 10), false);
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::BUY, 110.0, 10), false);
+    std::vector<Bar> initialBars(NQ_ID + 1);
+    initialBars[NQ_ID] = createTestBar(NQ_ID, 105.0);
+    int64_t pnl1 = portfolio->getUnrealizedPnL(initialBars) + portfolio->getRealizedPnL();
+    EXPECT_NEAR(priceIntToDouble(pnl1), -2.7 * 3, 0.01);
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::SELL, 120, -20), true);
+    int64_t pnl2 = portfolio->getRealizedPnL();
+    EXPECT_NEAR(priceIntToDouble(pnl2), 300 - 3 * 2.7, 0.01);
+}
+
+TEST_F(PortfolioTest, AddToExistingShortPosition) {
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::SELL, 100.0, -10), false);
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::SELL, 110.0, -10), false);
+    std::vector<Bar> initialBars(NQ_ID + 1);
+    initialBars[NQ_ID] = createTestBar(NQ_ID, 105.0);
+    int64_t pnl1 = portfolio->getUnrealizedPnL(initialBars) + portfolio->getRealizedPnL();
+    EXPECT_NEAR(priceIntToDouble(pnl1), -2.7 * 3, 0.01);
+    portfolio->executeOrder(createTestOrder(NQ_ID, SignalType::BUY, 90, 20), true);
+    int64_t pnl2 = portfolio->getRealizedPnL();
+    EXPECT_NEAR(priceIntToDouble(pnl2), 300 - 3 * 2.7, 0.01);
+}
+
 // ============================================================================
 // EDGE CASES
 // ============================================================================

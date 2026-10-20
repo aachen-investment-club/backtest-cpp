@@ -150,7 +150,7 @@ void Portfolio::executeOrder(const Order& order, const bool close) {
         Position& pos = positions_[order.symbol_id];
 
         if ((order.quantity > 0) == (pos.quantity > 0)) {  // ADD
-            pos.averagePrice = priceDoubleToInt(
+            pos.averagePrice = std::llround(
                 static_cast<double>((pos.quantity * pos.averagePrice +
                                      order.quantity * order.price)) /  // Avoid integer division
                 (pos.quantity + order.quantity));
