@@ -23,7 +23,7 @@ class Config {
         StrategyConfig strategy_;
         PortfolioConfig portfolio_;
         LoggingConfig logging_;
-        std::filesystem::path dataPath_;
+        std::string dataPath_;
 
-        Config(const std::filesystem::path& configPath);
+        Config(const std::string& configPath);
 };

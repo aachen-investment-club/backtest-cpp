@@ -4,7 +4,7 @@
 
 #include "backtest-cpp/config.h"
 
-Config::Config(const std::filesystem::path& configPath) {
+Config::Config(const std::string& configPath) {
     const YAML::Node root = YAML::LoadFile(configPath);
     
     const auto& strategy = root["strategy"]; 
@@ -25,5 +25,5 @@ Config::Config(const std::filesystem::path& configPath) {
     portfolio_.initialCash = portfolio["initial_cash"].as<double>();
     portfolio_.leverage = portfolio["leverage"].as<double>();
 
-    dataPath_ = std::filesystem::path("data") / root["data"]["data_path"].as<std::string>();
+    dataPath_ = "data/" + root["data"]["data_path"].as<std::string>();
 }

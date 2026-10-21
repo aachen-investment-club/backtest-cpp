@@ -21,7 +21,7 @@
 // -------------------------------------------------
 // BACKTEST PARAMETERS
 // -------------------------------------------------
-const std::filesystem::path CONFIG_PATH{"strategies/SMACrossover/config.yaml"};
+const std::string CONFIG_PATH{"strategies/SMACrossover/config.yaml"};
 // constexpr bool DEBUG = false;
 // -------------------------------------------------
 
