@@ -15,12 +15,14 @@
 #include "backtest-cpp/portfolio.h"
 #include "backtest-cpp/strategies/smacrossover.h"
 #include "backtest-cpp/symbol_dictionary.h"
+#include "backtest-cpp/config.h"
+#include "backtest-cpp/strategies/strategy_factory.h"
 
 // -------------------------------------------------
 // BACKTEST PARAMETERS
 // -------------------------------------------------
-#define DEBUG false
-inline const std::string DATA_DIRECTORY{"./data/used_data"};
+const std::string CONFIG_PATH{"strategies/SMACrossover/config.yaml"};
+// constexpr bool DEBUG = false;
 // -------------------------------------------------
 
 int main() {
@@ -30,17 +32,18 @@ int main() {
     // Initialization
     // -------------------------------------------------
     // 1. Initialization
+    Config config(CONFIG_PATH);
     symbol_dictionary symDict;
     DataHandler dataHandler;
-    Portfolio portfolio({.initialCash = 100'000.0, .commission = 2.7, .leverage = 1.0});
+    Portfolio portfolio(config.portfolio_);
 
     // 2. LOAD DATA FIRST!
-    dataHandler.loadAllCSVs(DATA_DIRECTORY, symDict, "string");
+    dataHandler.loadAllCSVs(config.dataPath_, symDict, "string");
 
     uint32_t nq_id = symDict.get_id("NQ_sample.csv");
     std::cout << "NQ_ID from Dictionary: " << nq_id << "\n";
 
-    SMACrossover strategy(nq_id, 10, 30);
+    auto strategy = makeStrategy(config.strategy_, nq_id);
 
     // -------------------------------------------------
     // Strategy warm-up (SMA lookback)
@@ -50,7 +53,7 @@ int main() {
     for (int i = 0; i < 30 && dataHandler.hasMoreData(); ++i) {
         historicalData.push_back(dataHandler.getNextBars());
     }
-    strategy.onInit(historicalData);
+    strategy->onInit(historicalData);
     std::cout << "Starting backtest..." << "\n";
 
     // -------------------------------------------------
@@ -83,16 +86,16 @@ int main() {
         }
         openOrders.clear();
 
-        strategy.onBars(bars, portfolio.getCurrentPositions(), signals);
+        strategy->onBars(bars, portfolio.getCurrentPositions(), signals);
 
         for (const auto& signal : signals) {
             // Order order = strategy.generateOrder(signal, bars[signal-symbol_id], 10'000,
             //                                      portfolio.getCurrentPositions());
 
-            openOrders.emplace_back(strategy.generateOrder(signal, bars[signal.symbol_id], 10'000,
+            openOrders.emplace_back(strategy->generateOrder(signal, bars[signal.symbol_id], 10'000,
                                                            portfolio.getCurrentPositions()));
 
-            if (DEBUG) {
+            if (config.logging_.debugLogs) {
                 std::cout << "Order at bar " << barCount << ": "
                           << (signal.type == SignalType::BUY ? "BUY " : "SELL ") << " @ "
                           << priceIntToDouble(bars[signal.symbol_id].open) << "\n";
@@ -107,7 +110,7 @@ int main() {
 
             // portfolio.executeOrder(order, true);
 
-            if (DEBUG) {
+            if (config.logging_.debugLogs) {
                 std::cout << "INFO | Total Equity After: " << std::setprecision(7)
                           << priceIntToDouble(portfolio.getTotalEquity(bars)) << "\n";
 
