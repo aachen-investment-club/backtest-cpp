@@ -9,9 +9,15 @@
 #include <unordered_map>
 
 #include "backtest-cpp/types.h"
-SMACrossover::SMACrossover(uint32_t sym_id, int shortPeriod, int longPeriod)
-    : symbol_id(sym_id), shortPeriod_(shortPeriod), longPeriod_(longPeriod) {
-    if (shortPeriod >= longPeriod) {
+#include "backtest-cpp/config.h"
+#include "backtest-cpp/strategies/strategy_factory.h"
+
+SMACrossover::SMACrossover(const StrategyConfig& config, const uint32_t sym_id)
+    : symbol_id(sym_id) {
+    shortPeriod_ = config.strategyParameters["short_period"].as<int>();
+    longPeriod_ = config.strategyParameters["long_period"].as<int>();
+    
+    if (shortPeriod_ >= longPeriod_) {
         throw std::invalid_argument("Short period must be < long period");
     }
 }
@@ -146,3 +152,5 @@ std::unordered_map<uint32_t, Order> SMACrossover::generateOrders(
 
     return orderMap;
 }
+
+REGISTER_STRATEGY(SMACrossover, "SMACrossover");

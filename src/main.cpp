@@ -13,7 +13,6 @@
 #include "backtest-cpp/data.h"
 #include "backtest-cpp/performance.h"
 #include "backtest-cpp/portfolio.h"
-#include "backtest-cpp/strategies/smacrossover.h"
 #include "backtest-cpp/symbol_dictionary.h"
 #include "backtest-cpp/config.h"
 #include "backtest-cpp/strategies/strategy_factory.h"

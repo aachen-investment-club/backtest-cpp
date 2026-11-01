@@ -1,10 +1,11 @@
 #pragma once
 
 #include "backtest-cpp/strategy.h"
+#include "backtest-cpp/config.h"
 
 class SMACrossover : public Strategy {
    public:
-    SMACrossover(uint32_t sym_id, int shortPeriod = 10, int longPeriod = 30);
+    SMACrossover(const StrategyConfig& config, const uint32_t sym_id);
 
     void onInit(const std::vector<std::vector<Bar>>& availableData) override;
 
@@ -32,3 +33,4 @@ class SMACrossover : public Strategy {
 
     bool initialized_ = false;
 };
+
