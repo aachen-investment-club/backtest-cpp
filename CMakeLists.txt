@@ -37,6 +37,24 @@ target_compile_options(backtest_warnings INTERFACE
         /W4;/w14242;/w14254;/w14263;/w14265;/w14287;/w14296;/w14311;/w14545;/w14546;/w14547;/w14549;/w14555;/w14619;/w14640;/w14826;/w14905;/w14906;/w14928>
 )
 
+include(FetchContent)
+FetchContent_Declare(
+    yaml-cpp
+    GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+    GIT_TAG yaml-cpp-0.9.0            
+    SYSTEM
+    FIND_PACKAGE_ARGS 0.9 NAMES yaml-cpp   
+)
+
+block(SCOPE_FOR VARIABLES)
+    set(YAML_CPP_BUILD_TESTS OFF)
+    set(YAML_CPP_BUILD_TOOLS OFF)
+    set(YAML_CPP_BUILD_CONTRIB OFF)
+    set(YAML_CPP_INSTALL ON)                 # needed so backtest_core's exported link to yaml-cpp resolves
+    set(CMAKE_COMPILE_WARNING_AS_ERROR OFF)  # don't apply -Werror to yaml-cpp
+    FetchContent_MakeAvailable(yaml-cpp)
+endblock()
+
 add_subdirectory(src)
 add_subdirectory(strategies)
 add_subdirectory(performance)
