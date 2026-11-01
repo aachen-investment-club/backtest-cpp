@@ -7,10 +7,12 @@
 #include <functional>
 #include <concepts>
 
-std::unordered_map<std::string, Creator>& getStrategyRegistry() { 
-    // define registry as a static function variable to prevent static initialization order fiasco 
-    static std::unordered_map<std::string, Creator> registry;
-    return registry;
+namespace {
+    std::unordered_map<std::string, Creator>& getStrategyRegistry() { 
+        // define registry as a static function variable to prevent static initialization order fiasco 
+        static std::unordered_map<std::string, Creator> registry;
+        return registry;
+    }
 }
 
 void registerCreator(const std::string& strategyName, const Creator& creator) {
