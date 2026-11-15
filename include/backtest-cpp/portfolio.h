@@ -11,7 +11,9 @@
 struct PortfolioConfig {
     double initialCash;
     double commission;
-    double leverage = 1.0;
+    double leverage = 1.0; // not used yet TODO
+    bool roundtripCommission = true; // not used yet TODO
+    double spread = 0.5; // not used yet TODO
 };
 
 class Portfolio {
